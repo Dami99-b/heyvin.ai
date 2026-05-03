@@ -1,0 +1,6 @@
+{
+  "name": "Vault AI",
+  "description": "High-performance Web3 terminal for the Bags ecosystem with real-time momentum tracking and alpha detection.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["Web3", "Blockchain Analysis"]
+}
