@@ -2,12 +2,12 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index"
+      "source": "/api/:match*",
+      "destination": "/api/index?__vercel_original_path=/api/:match*"
     },
     {
       "source": "/auth/callback",
-      "destination": "/api/index"
+      "destination": "/api/index?__vercel_original_path=/auth/callback"
     },
     {
       "source": "/(.*)",

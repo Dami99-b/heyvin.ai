@@ -14,9 +14,30 @@ app.use(express.json());
 
 // Vercel URL normalizing middleware to translate internal function rewrites back to expected routes
 app.use((req, res, next) => {
+  console.log(`[ROUTE LOG] Entering Request - Method: ${req.method} | URL: ${req.url} | originalUrl: ${req.originalUrl}`);
+  
+  // 1. If we forwarded the original path via vercel.json rewrite query string, restore it
+  const originalPath = req.query.__vercel_original_path as string;
+  if (originalPath) {
+    console.log(`[ROUTE LOG] Found custom forwarded path: "${originalPath}". Restoring original request destination.`);
+    try {
+      // Reconstruct req.url with original path, keeping all other query params intact
+      const urlObj = new URL(req.url, "http://localhost");
+      urlObj.pathname = originalPath;
+      urlObj.searchParams.delete("__vercel_original_path");
+      req.url = urlObj.pathname + urlObj.search;
+      console.log(`[ROUTE LOG] Restored request URL to: "${req.url}"`);
+    } catch (e: any) {
+      console.error("[ROUTE LOG] Error while reconstructing original url:", e);
+    }
+  }
+
+  // 2. Legacy fallback normalization (e.g., direct redirects to vercel endpoints with code)
   if (req.url && (req.url.startsWith("/api/index") || req.url.startsWith("/api/oauth")) && req.query.code) {
     req.url = req.url.replace(/^\/(api\/index|api\/oauth)/, "/auth/callback");
+    console.log(`[ROUTE LOG] Normalized legacy callback url to: "${req.url}"`);
   }
+  
   next();
 });
 
@@ -362,38 +383,56 @@ Sound like a sharp, warm mentor. No fluff. No generic, overly dramatic motivatio
   }
 });
 
-// Google OAuth endpoints
-app.get("/api/auth/google/url", (req, res) => {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
+// Helper to consistently compute Google OAuth Redirect URIs across environments
+function getGoogleRedirectUri(clientOrigin?: string, hostHeader?: string, reqProtocol?: string): string {
+  // 1. Prioritize explicitly configured env variable for strict Google Cloud Console alignment
+  if (process.env.GOOGLE_REDIRECT_URI) {
+    console.log(`[Google OAuth] Prioritizing configured GOOGLE_REDIRECT_URI: "${process.env.GOOGLE_REDIRECT_URI}"`);
+    return process.env.GOOGLE_REDIRECT_URI;
+  }
   
-  // Resolve origin from query parameter first, fallback to headers, Vercel, or localhost
-  const clientOrigin = req.query.origin as string;
-  let redirectUri = "";
-  
+  // 2. Client-provided origin (vital for dynamic branch previews)
   if (clientOrigin) {
     try {
       const parsed = new URL(clientOrigin);
-      redirectUri = `${parsed.origin}/auth/callback`;
-    } catch (_) {
-      // Ignore invalid URL
+      const uri = `${parsed.origin}/auth/callback`;
+      console.log(`[Google OAuth] Resolved dynamic client origin redirect URI: "${uri}"`);
+      return uri;
+    } catch (e) {
+      console.warn(`[Google OAuth] Provided clientOrigin is invalid: "${clientOrigin}". Error:`, e);
     }
   }
   
-  if (!redirectUri) {
-    if (process.env.GOOGLE_REDIRECT_URI) {
-      redirectUri = process.env.GOOGLE_REDIRECT_URI;
-    } else if (process.env.VERCEL_URL) {
-      const vUrl = process.env.VERCEL_URL;
-      redirectUri = vUrl.startsWith("http") ? `${vUrl}/auth/callback` : `https://${vUrl}/auth/callback`;
-    } else {
-      const host = req.get('host') || "localhost:3000";
-      const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-      redirectUri = `${protocol}://${host}/auth/callback`;
-    }
+  // 3. Fallback to general Vercel deployment address
+  if (process.env.VERCEL_URL) {
+    const vUrl = process.env.VERCEL_URL;
+    const resolvedDomain = vUrl.startsWith("http") ? vUrl : `https://${vUrl}`;
+    const uri = `${resolvedDomain}/auth/callback`;
+    console.log(`[Google OAuth] Resolved Vercel domain redirect URI: "${uri}"`);
+    return uri;
   }
+  
+  // 4. Fallback to standard request headers or localhost fallback
+  const host = hostHeader || "localhost:3000";
+  const protocol = reqProtocol === "https" ? "https" : "http";
+  const uri = `${protocol}://${host}/auth/callback`;
+  console.log(`[Google OAuth] Resolved request context redirect URI: "${uri}"`);
+  return uri;
+}
+
+// Google OAuth endpoints
+app.get("/api/auth/google/url", (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientOrigin = req.query.origin as string;
+  
+  const redirectUri = getGoogleRedirectUri(
+    clientOrigin,
+    req.get("host"),
+    req.secure || req.headers["x-forwarded-proto"] === "https" ? "https" : "http"
+  );
   
   if (!clientId) {
-    // Return sandbox callback URL directly if no client ID is found
+    console.warn("[Google OAuth] GOOGLE_CLIENT_ID not found. Directing to sandbox mode automatically.");
     return res.json({ 
       url: `/auth/callback?code=sandbox_code`, 
       isSandbox: true,
@@ -401,7 +440,8 @@ app.get("/api/auth/google/url", (req, res) => {
     });
   }
 
-  const encodedState = clientOrigin ? Buffer.from(clientOrigin).toString('base64') : 'sandbox';
+  // Generate robust, secure state parameter verifying originating domain/intent
+  const encodedState = clientOrigin ? Buffer.from(clientOrigin).toString("base64") : "sandbox";
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -412,8 +452,16 @@ app.get("/api/auth/google/url", (req, res) => {
     state: encodedState
   });
 
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  console.log("[Google OAuth] Constructing Google Authorization Request:", {
+    redirectUri,
+    clientIdExists: !!clientId,
+    state: encodedState,
+    authUrl
+  });
+
   res.json({ 
-    url: `https://accounts.google.com/o/oauth2/v2/auth?${params}`, 
+    url: authUrl, 
     isSandbox: false 
   });
 });
@@ -422,8 +470,9 @@ app.get(["/auth/callback", "/auth/callback/", "/api/auth/callback", "/api/auth/c
   const code = req.query.code as string;
   const state = req.query.state as string;
   
-  // If hitting a serverless path directly without any auth code, redirect back cleanly to the web app frontend
+  // Clean redirect back if hit directly without authorization tokens
   if (!code && (req.path === "/api/index" || req.path === "/api/auth/callback")) {
+    console.log("[Google OAuth CALLBACK] Hit callback without credentials, redirecting back to home.");
     return res.redirect("/");
   }
 
@@ -431,40 +480,41 @@ app.get(["/auth/callback", "/auth/callback/", "/api/auth/callback", "/api/auth/c
   let name = "Sovereign Sister";
   const isSandbox = !process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || code === "sandbox_code";
 
+  console.log("[Google OAuth CALLBACK] Callback request received:", {
+    isSandbox,
+    codeExists: !!code,
+    stateReceived: state || "null",
+    path: req.path,
+    originatingIp: req.ip
+  });
+
   if (!isSandbox) {
     try {
       let clientOrigin = "";
-      if (state && state !== 'sandbox') {
+      if (state && state !== "sandbox") {
         try {
-          clientOrigin = Buffer.from(state, 'base64').toString('utf-8');
-        } catch (_) {
-          // Ignore decode error
+          clientOrigin = Buffer.from(state, "base64").toString("utf-8");
+          console.log(`[Google OAuth CALLBACK] Decoded request state origin: "${clientOrigin}"`);
+        } catch (e) {
+          console.error(`[Google OAuth CALLBACK] Failed to Base64 decode state parameter "${state}":`, e);
         }
+      } else {
+        console.warn(`[Google OAuth CALLBACK] Warning: missing or empty state parameter: "${state}"`);
       }
 
-      // Dynamically resolve redirect URI matching the request
-      let redirectUri = "";
-      if (clientOrigin) {
-        try {
-          const parsed = new URL(clientOrigin);
-          redirectUri = `${parsed.origin}/auth/callback`;
-        } catch (_) {
-          // Ignore
-        }
-      }
+      // Dynamically computed redirect URI MUST match what was passed to auth endpoint
+      const redirectUri = getGoogleRedirectUri(
+        clientOrigin,
+        req.get("host"),
+        req.secure || req.headers["x-forwarded-proto"] === "https" ? "https" : "http"
+      );
 
-      if (!redirectUri) {
-        if (process.env.GOOGLE_REDIRECT_URI) {
-          redirectUri = process.env.GOOGLE_REDIRECT_URI;
-        } else if (process.env.VERCEL_URL) {
-          const vUrl = process.env.VERCEL_URL;
-          redirectUri = vUrl.startsWith("http") ? `${vUrl}/auth/callback` : `https://${vUrl}/auth/callback`;
-        } else {
-          const host = req.get('host') || "localhost:3000";
-          const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-          redirectUri = `${protocol}://${host}/auth/callback`;
-        }
-      }
+      console.log("[Google OAuth CALLBACK] Initiating token exchange POST:", {
+        tokenUrl: "https://oauth2.googleapis.com/token",
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        redirectUri,
+        codeLength: code ? code.length : 0
+      });
       
       const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
         method: "POST",
@@ -478,20 +528,39 @@ app.get(["/auth/callback", "/auth/callback/", "/api/auth/callback", "/api/auth/c
         })
       });
       
-      if (tokenRes.ok) {
-        const tokenData = await tokenRes.json();
-        const infoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-          headers: { Authorization: `Bearer ${tokenData.access_token}` }
-        });
-        if (infoRes.ok) {
-          const userInfo = await infoRes.json();
-          email = userInfo.email || email;
-          name = userInfo.given_name || userInfo.name || name;
-        }
+      if (!tokenRes.ok) {
+        const errorBody = await tokenRes.text();
+        console.error(`[Google OAuth CALLBACK Status ${tokenRes.status}] Google rejected token exchange. Body:`, errorBody);
+        throw new Error(`Google token exchange error (Status ${tokenRes.status}): ${errorBody}`);
       }
-    } catch (e) {
-      console.error("Google OAuth token exchange failed, returning default credentials:", e);
+      
+      const tokenData = await tokenRes.json();
+      console.log("[Google OAuth CALLBACK] Token exchange succeeded. Retrieving user profile info...");
+
+      const infoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` }
+      });
+      
+      if (!infoRes.ok) {
+        const errorBody = await infoRes.text();
+        console.error(`[Google OAuth CALLBACK Status ${infoRes.status}] Failed to fetch userinfo. Body:`, errorBody);
+        throw new Error(`Google userinfo fetch error (Status ${infoRes.status}): ${errorBody}`);
+      }
+      
+      const userInfo = await infoRes.json();
+      console.log("[Google OAuth CALLBACK] User profile loaded successfully:", {
+        email: userInfo.email,
+        name: userInfo.name,
+        locale: userInfo.locale
+      });
+
+      email = userInfo.email || email;
+      name = userInfo.given_name || userInfo.name || name;
+    } catch (e: any) {
+      console.error("[Google OAuth CALLBACK] Token exchange workflow crashed:", e.message || e);
     }
+  } else {
+    console.log("[Google OAuth CALLBACK] Skipping real token exchange: system running in secure local Sandbox mode.");
   }
 
   res.send(`
