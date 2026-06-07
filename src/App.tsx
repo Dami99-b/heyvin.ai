@@ -26,6 +26,7 @@ import { FocusLockView } from "./components/FocusLockView";
 import { TherapeuticCopingSuite } from "./components/TherapeuticCopingSuite";
 import { SovereignSettingsView } from "./components/SovereignSettingsView";
 import { SovereignChroniclesFeed } from "./components/SovereignChroniclesFeed";
+import { LandingInteractiveShowcase } from "./components/LandingInteractiveShowcase";
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -67,6 +68,12 @@ export default function App() {
   const [signupBasedIn, setSignupBasedIn] = useState<'Nigeria' | 'India' | 'Mexico' | 'Other'>("Nigeria");
   const [signupHomeSituation, setSignupHomeSituation] = useState<'Living with parents' | 'Partner' | 'In-laws' | 'Siblings' | 'Other'>("Living with parents");
   const [signupPrimaryGoal, setSignupPrimaryGoal] = useState<'University degree' | 'Career growth' | 'Starting a business'>("University degree");
+
+  // Google OAuth credentials state
+  const [googleAuthUser, setGoogleAuthUser] = useState<{ email: string; name: string } | null>(null);
+  const [oauthLoading, setOauthLoading] = useState(false);
+  const [showOAuthHelp, setShowOAuthHelp] = useState(false);
+  const [signUpStep, setSignUpStep] = useState<number>(1);
 
   // Logging Forms
   const [stressLevel, setStressLevel] = useState<number>(40);
@@ -123,6 +130,61 @@ export default function App() {
     window.addEventListener("heyvin_db_update", handler);
     return () => window.removeEventListener("heyvin_db_update", handler);
   }, [currentUser]);
+
+  // Listen for Google OAuth callback success payload
+  useEffect(() => {
+    const handleOAuthMessage = (event: MessageEvent) => {
+      const origin = event.origin;
+      const isTrusted = 
+        origin === window.location.origin || 
+        origin.endsWith('.run.app') || 
+        origin.includes('localhost') || 
+        origin.includes('127.0.0.1') || 
+        origin.includes('vercel.app');
+        
+      if (!isTrusted) {
+        return;
+      }
+      
+      if (event.data?.type === 'GOOGLE_OAUTH_SUCCESS' && event.data?.user) {
+        setOauthLoading(false);
+        const { name, email } = event.data.user;
+        
+        // Let's set prefilled signup details to save effort!
+        setSignupName(name);
+        setSignupEmail(email);
+        setGoogleAuthUser({ email, name });
+        triggerSuccessToast(`Google credentials connected: ${email} 🛡️`);
+        setSignUpStep(2);
+      }
+    };
+
+    window.addEventListener('message', handleOAuthMessage);
+    return () => window.removeEventListener('message', handleOAuthMessage);
+  }, []);
+
+  const handleGoogleSignIn = async () => {
+    setOauthLoading(true);
+    try {
+      const res = await fetch("/api/auth/google/url");
+      if (!res.ok) throw new Error("Could not construct OAuth authorization url");
+      const data = await res.json();
+      
+      const authWindow = window.open(
+        data.url,
+        "heyvin_google_oauth_popup",
+        "width=520,height=650"
+      );
+
+      if (!authWindow) {
+        setOauthLoading(false);
+        alert("Please enable popups to authenticate securely with your Google profile.");
+      }
+    } catch (err) {
+      console.error("Google login initiation went wrong:", err);
+      setOauthLoading(false);
+    }
+  };
 
   // Handle Sign-Up/Sign-In Preseed
   const handleSignUp = (e: React.FormEvent) => {
@@ -533,7 +595,7 @@ export default function App() {
     <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${themeClassContent} ${theme === 'dark' ? 'dark' : ''} relative overflow-hidden`}>
       
       {/* Subtle Centered Background Logo Theme */}
-      {!stealthActive && (
+      {!stealthActive && currentUser && (
         <div className="fixed inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-0 select-none">
           <HeyvinLogo 
             size="40vw" 
@@ -631,7 +693,7 @@ export default function App() {
       {/* Authentication / Onboarding view */}
       {!currentUser ? (
         guestView === 'landing' ? (
-          <div className="min-h-screen w-full flex flex-col items-center justify-between p-6 sm:p-12 bg-[#FAF7F2] text-[#1A1414] font-sans relative overflow-y-auto select-none">
+          <div className="min-h-screen w-full flex flex-col items-center justify-between p-4 sm:p-8 bg-[#FAF7F2] text-[#1A1414] font-sans relative overflow-y-auto select-none">
             {/* Landing page top header bar */}
             <div className="w-full max-w-5xl flex items-center justify-between py-4 border-b border-[#EDE8E0] mb-8">
               <div className="flex items-center gap-2">
@@ -647,7 +709,7 @@ export default function App() {
             </div>
 
             {/* Hero container */}
-            <div className="w-full max-w-4xl mx-auto flex flex-col items-center text-center space-y-6 my-auto pt-4 pb-12">
+            <div className="w-full max-w-5xl mx-auto flex flex-col items-center text-center space-y-6 pt-4 pb-12">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-[#7C2D3E] font-semibold text-[10px] uppercase tracking-wider">
                 <Sparkles size={10} className="text-[#7C2D3E]" /> Securing Sovereignty & Focus
               </div>
@@ -670,7 +732,7 @@ export default function App() {
               </div>
 
               {/* USP columns */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full pt-16 text-left">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full pt-12 text-left">
                 <div className="p-6 bg-white border border-[#EDE8E0] rounded-xl shadow-xs space-y-3">
                   <div className="w-8 h-8 rounded-lg bg-red-50 text-[#7C2D3E] flex items-center justify-center">
                     <Shield size={16} />
@@ -704,10 +766,14 @@ export default function App() {
 
               {/* Sisterhood Interactive Insight Chronicles & Feed */}
               <SovereignChroniclesFeed />
+
+              {/* Dynamic Interactive Showcases (Calculator, Shoutbox, Trust Checks) */}
+              <LandingInteractiveShowcase />
+
             </div>
 
             {/* Footer */}
-            <div className="w-full max-w-5xl py-6 border-t border-[#EDE8E0] flex flex-col sm:flex-row items-center justify-between text-xs text-[#7A6860] gap-4">
+            <div className="w-full max-w-5xl py-6 border-t border-[#EDE8E0] flex flex-col sm:flex-row items-center justify-between text-xs text-[#7A6860] gap-4 mt-8">
               <div>
                 © 2026 Heyvin Team. All Rights Reserved. Absolute privacy and local data encryption.
               </div>
@@ -726,57 +792,269 @@ export default function App() {
             </div>
           </div>
         ) : (
-          <div className="min-h-screen flex items-center justify-center p-4 bg-[#FDFAF6] select-none">
-            <div className="w-full max-w-md p-8 rounded-2xl bg-white border border-orange-100/50 shadow-xl space-y-6 flex flex-col">
-              {/* Back to landing button */}
-              <button 
-                onClick={() => setGuestView('landing')} 
-                className="text-[#7A6860] hover:text-[#1A1414] text-xs font-semibold flex items-center gap-1 transition-colors self-start cursor-pointer group mb-1"
-              >
-                <ChevronLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" /> Back to Landing Page
-              </button>
+          <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-12 bg-[#FAF7F2] select-none">
+            
+            {/* Left Panel: Security Sandbox Indicator & Advisory Tips */}
+            <div className="lg:col-span-5 bg-[#7C2D3E] text-orange-50 p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
+              {/* Subtle background glow */}
+              <div className="absolute -top-40 -left-40 w-96 h-96 bg-red-800/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-rose-600/10 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="text-center space-y-4 flex flex-col items-center">
-                <HeyvinLogo size={100} glowOpacity={0.25} showText={false} className="mb-1" />
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-semibold tracking-[0.1em] text-amber-950 font-serif uppercase animate-pulse">
-                    HEYVIN AI
-                  </h1>
-                  <p className="text-xs font-medium text-gray-400 font-sans tracking-wide">
-                    Discreet personal success auditor for ambitious young women
+              <div className="space-y-8 relative z-10">
+                <button 
+                  onClick={() => setGuestView('landing')} 
+                  className="text-orange-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors self-start cursor-pointer group"
+                >
+                  <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back to Landing Page
+                </button>
+
+                <div className="space-y-4">
+                  <span className="text-[9.5px] uppercase font-bold tracking-widest text-[#E28E75] bg-red-950/40 px-3 py-1 rounded-full inline-block">
+                    Zero-Telemetry Sandbox
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white tracking-tight leading-tight">
+                    Every Study Block, <br/>
+                    <span className="text-[#E28E75]">Utterly Confidential.</span>
+                  </h2>
+                  <p className="text-sm text-rose-100 leading-relaxed font-sans max-w-md">
+                    We do not store your reports, logs, or diary logs on global servers. Everything resides inside your physical browser cache proxy — completely immune to network intrusion.
                   </p>
+                </div>
+
+                {/* Interactive Ticker Advisory Carousel on Left Column */}
+                <div className="bg-red-950/30 border border-red-800/30 p-5 rounded-2xl space-y-3">
+                  <div className="flex justify-between items-center text-[10px] font-bold text-orange-300 uppercase tracking-wider">
+                    <span>Tactical Focus Tip</span>
+                    <span className="font-mono">Secure Advisory</span>
+                  </div>
+                  <p className="text-xs text-rose-50 leading-relaxed italic font-serif">
+                    "Choose an anonymous or shorten first name (pseudonym) under credentials as a secondary security barrier so unannounced relatives can never trace your academic pursuits."
+                  </p>
+                </div>
+
+                {/* Hard Privacy Checklist Ticks */}
+                <div className="space-y-3 pt-4 border-t border-red-800/30">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-rose-100">
+                    <span className="p-0.5 bg-emerald-950/50 text-emerald-400 rounded-md">
+                      <Check size={12} strokeWidth={3} />
+                    </span>
+                    <span>Localized cryptographic storage</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-semibold text-rose-100">
+                    <span className="p-0.5 bg-emerald-950/50 text-emerald-400 rounded-md">
+                      <Check size={12} strokeWidth={3} />
+                    </span>
+                    <span>No unrequested diagnostic logs</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-semibold text-rose-100">
+                    <span className="p-0.5 bg-emerald-950/50 text-emerald-400 rounded-md">
+                      <Check size={12} strokeWidth={3} />
+                    </span>
+                    <span>Active double-stealth cover (StudySync)</span>
+                  </div>
                 </div>
               </div>
 
-              <form onSubmit={handleSignUp} className="space-y-4 font-sans">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">First Name</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Pricilla"
-                    value={signupName}
-                    onChange={(e) => setSignupName(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-100 text-gray-800 focus:outline-none"
-                  />
-                </div>
+              {/* Quick support link */}
+              <div className="pt-8 text-xs text-rose-200 border-t border-red-800/20 mt-8 relative z-10 flex items-center justify-between">
+                <span>Heyvin Secure Workspace v2.8</span>
+                <a 
+                  href="https://youtube.com/@heyvinaiteam?si=lI8AsHrtGB1Ow9WS" 
+                  target="_blank" 
+                  rel="noreferrer noopener"
+                  className="hover:text-white transition-colors"
+                >
+                  Contact Us
+                </a>
+              </div>
+                 {/* Right Panel: Active Credential Forms */}
+            <div className="lg:col-span-7 p-6 sm:p-12 flex flex-col justify-center max-w-xl mx-auto w-full space-y-6 font-sans">
+              
+              {/* Stepper Progress Indicator */}
+              <div className="flex items-center justify-between pb-4 border-b border-orange-100/30">
+                <button
+                  type="button"
+                  onClick={() => signUpStep > 1 && setSignUpStep(1)}
+                  className={`flex items-center gap-1.5 transition-all text-left ${signUpStep > 1 ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                >
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9.5px] font-bold transition-colors ${signUpStep >= 1 ? 'bg-[#7C2D3E] text-white' : 'bg-gray-150 text-gray-400'}`}>
+                    {signUpStep > 1 ? "✓" : "1"}
+                  </span>
+                  <span className={`text-[10px] font-bold tracking-tight ${signUpStep === 1 ? 'text-[#7C2D3E]' : 'text-gray-400'}`}>Identity</span>
+                </button>
+                <div className="h-px bg-orange-100 flex-1 mx-2" />
+                <button
+                  type="button"
+                  onClick={() => signUpStep > 2 ? setSignUpStep(2) : signUpStep === 1 && signupName.trim() && setSignUpStep(2)}
+                  className={`flex items-center gap-1.5 transition-all text-left ${signUpStep > 2 || (signUpStep === 1 && signupName.trim()) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                >
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9.5px] font-bold transition-colors ${signUpStep >= 2 ? 'bg-[#7C2D3E] text-white' : 'bg-gray-150 text-gray-400'}`}>
+                    {signUpStep > 2 ? "✓" : "2"}
+                  </span>
+                  <span className={`text-[10px] font-bold tracking-tight ${signUpStep === 2 ? 'text-[#7C2D3E]' : 'text-gray-400'}`}>Environment</span>
+                </button>
+                <div className="h-px bg-orange-100 flex-1 mx-2" />
+                <button
+                  type="button"
+                  onClick={() => signUpStep === 2 && setSignUpStep(3)}
+                  className={`flex items-center gap-1.5 transition-all text-left ${signUpStep === 2 ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                >
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9.5px] font-bold transition-colors ${signUpStep === 3 ? 'bg-[#7C2D3E] text-white' : 'bg-gray-150 text-gray-400'}`}>
+                    3
+                  </span>
+                  <span className={`text-[10px] font-bold tracking-tight ${signUpStep === 3 ? 'text-[#7C2D3E]' : 'text-gray-400'}`}>Priorities</span>
+                </button>
+              </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Secure Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="pricilla@gmail.com"
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-100 text-gray-800 focus:outline-none"
-                  />
-                </div>
+              <div className="space-y-1">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-[#7C2D3E] block font-mono">
+                  Step {signUpStep} of 3: {signUpStep === 1 ? "Credentials & Sign-On" : signUpStep === 2 ? "Environmental Calibration" : "Priorities & Activation"}
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-serif font-black text-amber-950 uppercase tracking-tight">
+                  {signUpStep === 1 
+                    ? (googleAuthUser ? "Credentials Connected" : "Access Your Space") 
+                    : signUpStep === 2 
+                      ? "Describe Your Environment" 
+                      : "Establish Sovereignty Target"}
+                </h1>
+                <p className="text-xs text-[#7A6860] leading-relaxed max-w-sm">
+                  {signUpStep === 1 
+                    ? (googleAuthUser ? "Your identity is secure. Confirm your profile pseudonym below to proceed." : "Create a local pseudonym space or connect instantly to restore your study calendars securely.")
+                    : signUpStep === 2
+                      ? "Domestic situations dictate how boundaries must be paced. Provide your current context."
+                      : "Set your weekly target focus block to seed your personal metrics."
+                  }
+                </p>
+              </div>
 
-                <div className="space-y-3 pt-1 border-t border-orange-50/50">
+              {/* Interactive Keycard Badge Live Preview */}
+              <div className="bg-radial from-amber-950 to-[#60202e] text-orange-50 p-4 rounded-xl border border-amber-900/40 relative overflow-hidden group shadow-md transition-all duration-355 hover:shadow-lg">
+                <div className="absolute -top-12 -right-12 w-28 h-28 bg-[#7C2D3E]/35 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-500" />
+                <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-[#E28E75]/15 rounded-full blur-xl" />
+                <div className="flex justify-between items-start relative z-10">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Where are you based?</label>
-                    <div className="grid grid-cols-4 gap-1.5">
+                    <span className="text-[8px] uppercase tracking-widest text-[#E28E75] font-mono leading-none block">SOVEREIGN ACCESS KEYCARD</span>
+                    <span className="text-xs font-serif font-bold tracking-tight block">
+                      {signupName.trim() || googleAuthUser?.name || "Anonymous Sister"}
+                    </span>
+                    <span className="text-[9.5px] font-mono text-rose-200 block">
+                      {signupEmail.trim() || googleAuthUser?.email || "sandbox.key@heyvin.internal"}
+                    </span>
+                  </div>
+                  <div className="p-1 px-2.5 bg-red-950/40 border border-red-800/10 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider text-[#E28E75]">
+                    {googleAuthUser ? "OAUTH SECURE" : "LOCAL USER"}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2 pt-4 mt-4 border-t border-white/10 relative z-10 text-[9.5px] font-sans">
+                  <div>
+                    <span className="text-[#E28E75] uppercase block text-[8px] font-mono">Location BASE</span>
+                    <span className="font-semibold text-white">{signupBasedIn}</span>
+                  </div>
+                  <div>
+                    <span className="text-[#E28E75] uppercase block text-[8px] font-mono">Home Status</span>
+                    <span className="font-semibold text-white truncate max-w-[90px] block font-sans" title={signupHomeSituation}>
+                      {signupHomeSituation}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[#E28E75] uppercase block text-[8px] font-mono">Strategic Goal</span>
+                    <span className="font-semibold text-white truncate max-w-[90px] block font-sans" title={signupPrimaryGoal}>
+                      {signupPrimaryGoal}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* STEP 1: IDENTITY CREDENTIALS */}
+              {signUpStep === 1 && (
+                <div className="space-y-4 animate-fadeIn">
+                  {/* Google OAuth Launcher Section */}
+                  {!googleAuthUser && (
+                    <div className="space-y-3 pb-4 border-b border-orange-100/40">
+                      <button
+                        type="button"
+                        onClick={handleGoogleSignIn}
+                        disabled={oauthLoading}
+                        className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-amber-500/10 text-xs text-gray-700 font-bold tracking-wide transition-all shadow-xs cursor-pointer disabled:opacity-55"
+                      >
+                        {oauthLoading ? (
+                          <RefreshCw size={14} className="animate-spin text-[#7C2D3E]" />
+                        ) : (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                          </svg>
+                        )}
+                        <span>{oauthLoading ? "Connecting Secure Pipe..." : "Sign-On with Google OAuth"}</span>
+                      </button>
+                      <p className="text-[9px] text-center text-gray-400 font-mono leading-none">
+                        Utilizes secure sandboxed popup tokens. Fits standard university or college accounts.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Prefilled indicator if using Google */}
+                  {googleAuthUser && (
+                    <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl flex items-center justify-between">
+                      <div>
+                        <span className="text-[9px] font-bold text-emerald-800 uppercase block">Secure Google Vault Linked</span>
+                        <span className="text-[10.5px] font-semibold text-emerald-950 font-mono block">{signupEmail}</span>
+                      </div>
+                      <span className="p-1 bg-emerald-600 text-white rounded-full text-[10px]">
+                        <Check size={11} strokeWidth={3} />
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#7A6860]">First Name / Pseudonym</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Pricilla"
+                      value={signupName}
+                      onChange={(e) => setSignupName(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-[#7C2D3E]/10 text-gray-800 bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  {!googleAuthUser && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-[#7A6860]">Study-Safe Email Address</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="pricilla@gmail.com"
+                        value={signupEmail}
+                        onChange={(e) => setSignupEmail(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-[#7C2D3E]/10 text-gray-800 bg-white focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  <div className="pt-3">
+                    <button
+                      type="button"
+                      disabled={!signupName.trim() || (!googleAuthUser && !signupEmail.trim())}
+                      onClick={() => setSignUpStep(2)}
+                      className="w-full py-3 px-4 rounded-xl text-xs font-bold text-white bg-amber-900 hover:bg-amber-950 transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                    >
+                      <span>Continue to Environment Setup</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: DOMESTIC & ENVIRONMENT ENVIRONMENT */}
+              {signUpStep === 2 && (
+                <div className="space-y-4 animate-fadeIn">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#7A6860] block">Where are you based?</label>
+                    <div className="grid grid-cols-4 gap-2">
                       {(['Nigeria', 'India', 'Mexico', 'Other'] as const).map((country) => (
                         <button
                           key={country}
@@ -784,8 +1062,8 @@ export default function App() {
                           onClick={() => setSignupBasedIn(country)}
                           className={`py-2 px-1 rounded-xl text-[10px] font-bold border transition-all cursor-pointer text-center ${
                             signupBasedIn === country
-                              ? "border-[#E28E75] bg-orange-50/50 text-amber-900"
-                              : "border-gray-200 text-gray-400"
+                              ? "border-[#E28E75] bg-rose-50 text-amber-950 font-extrabold"
+                              : "border-gray-200 text-gray-400 bg-white"
                           }`}
                         >
                           {country}
@@ -794,59 +1072,127 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Your home situation?</label>
-                    <select
-                      value={signupHomeSituation}
-                      onChange={(e: any) => setSignupHomeSituation(e.target.value)}
-                      className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-100 text-gray-800 bg-white focus:outline-none font-medium"
-                    >
-                      {(['Living with parents', 'Partner', 'In-laws', 'Siblings', 'Other'] as const).map((situation) => (
-                        <option key={situation} value={situation}>
-                          {situation}
-                        </option>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#7A6860] block">What is your current Home Living situation?</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {[
+                        { val: 'Living with parents', desc: 'Frequent spontaneous chore assignments' },
+                        { val: 'Partner', desc: 'Shared task delegation schedule' },
+                        { val: 'In-laws', desc: 'High cultural priority on domestic attendance' },
+                        { val: 'Siblings', desc: 'Dynamic shared study interruptions' },
+                        { val: 'Other', desc: 'Custom environment parameters' }
+                      ].map((sit) => (
+                        <button
+                          key={sit.val}
+                          type="button"
+                          onClick={() => setSignupHomeSituation(sit.val as any)}
+                          className={`p-3 rounded-xl text-left border text-xs transition-all cursor-pointer ${
+                            signupHomeSituation === sit.val
+                              ? "border-[#7C2D3E] bg-rose-50/40 font-bold"
+                              : "border-gray-200 bg-white hover:border-gray-300"
+                          }`}
+                        >
+                          <div className="#7C2D3E block leading-none font-bold text-amber-950">{sit.val}</div>
+                          <span className="text-[9px] text-[#7A6860] font-normal leading-tight block mt-1">{sit.desc}</span>
+                        </button>
                       ))}
-                    </select>
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Primary goal?</label>
-                    <select
-                      value={signupPrimaryGoal}
-                      onChange={(e: any) => setSignupPrimaryGoal(e.target.value)}
-                      className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-100 text-gray-800 bg-white focus:outline-none font-medium"
+                  <div className="pt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSignUpStep(1)}
+                      className="py-3 px-4 rounded-xl text-xs font-bold text-amber-900 border border-orange-200 hover:bg-orange-50 bg-white transition-all cursor-pointer"
                     >
-                      {(['University degree', 'Career growth', 'Starting a business'] as const).map((goal) => (
-                        <option key={goal} value={goal}>
-                          {goal}
-                        </option>
-                      ))}
-                    </select>
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSignUpStep(3)}
+                      className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-white bg-amber-900 hover:bg-amber-950 transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>Next: Select Goal</span>
+                      <ArrowRight size={14} />
+                    </button>
                   </div>
                 </div>
+              )}
 
-                <button
-                  type="submit"
-                  className="w-full py-3 mt-4 rounded-xl text-xs font-bold text-white bg-amber-900 cursor-pointer hover:bg-amber-950 transition-all hover:shadow-md flex items-center justify-center gap-2"
-                >
-                  <span>Access Your Heyvin</span>
-                  <ArrowRight size={14} />
-                </button>
-              </form>
+              {/* STEP 3: PRIORITIES & TARGET ACTIVATION */}
+              {signUpStep === 3 && (
+                <form onSubmit={handleSignUp} className="space-y-4 animate-fadeIn">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#7A6860] block">Primary Study Goal</label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {[
+                        { val: 'University degree', desc: 'Preparing for examinations, lectures, and thesis submissions.' },
+                        { val: 'Career growth', desc: 'Learning technical frameworks, mock interviewing, and portfolio writing.' },
+                        { val: 'Starting a business', desc: 'Prototyping projects, finding pilot users, and exploring enterprise models.' }
+                      ].map((goalOption) => (
+                        <button
+                          key={goalOption.val}
+                          type="button"
+                          onClick={() => setSignupPrimaryGoal(goalOption.val as any)}
+                          className={`p-3.5 rounded-xl text-left border text-xs transition-all cursor-pointer ${
+                            signupPrimaryGoal === goalOption.val
+                              ? "border-[#7C2D3E] bg-rose-50/40 font-bold"
+                              : "border-gray-200 bg-white hover:border-gray-300"
+                          }`}
+                        >
+                          <div className="block leading-none font-bold text-amber-950">{goalOption.val}</div>
+                          <span className="text-[9.5px] text-[#7A6860] font-normal leading-normal block mt-1">{goalOption.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              {/* Landing page Contact Us footer section */}
-              <div className="pt-4 text-center border-t border-gray-100 mt-4">
-                <a 
-                  href="https://youtube.com/@heyvinaiteam?si=lI8AsHrtGB1Ow9WS" 
-                  target="_blank" 
-                  rel="noreferrer noopener"
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-red-500 transition-colors"
-                  id="landing_youtube_contact"
-                >
-                  <Youtube size={14} className="text-red-500 hover:scale-110 transition-transform" />
-                  <span>Contact Us (YouTube)</span>
-                </a>
-              </div>
+                  {/* Reclaimed Focus Blocks Initial Target Meter */}
+                  <div className="p-4 bg-[#FAF7F2] border border-orange-100 rounded-xl space-y-2.5">
+                    <div className="flex justify-between items-center text-[10px] font-bold text-[#7C2D3E] uppercase tracking-wide">
+                      <span>🎯 Initial weekly target</span>
+                      <span className="font-mono">8 Sessions / week</span>
+                    </div>
+                    <p className="text-[10px] text-gray-500 leading-normal">
+                      We pre-load your workspace agenda with 8 custom study-lock slots tailored to help cushion domestic chores. You can adjust this schedule inside your profile calendar settings anytime.
+                    </p>
+                  </div>
+
+                  <div className="pt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSignUpStep(2)}
+                      className="py-3 px-4 rounded-xl text-xs font-bold text-amber-900 border border-orange-200 hover:bg-orange-50 bg-white transition-all cursor-pointer"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-white bg-amber-900 hover:bg-[#60202e] transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>Establish Sovereign Space 🌟</span>
+                    </button>
+                  </div>
+
+                  {googleAuthUser && (
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGoogleAuthUser(null);
+                          setSignUpStep(1);
+                        }}
+                        className="text-[10px] text-amber-800 hover:underline cursor-pointer"
+                      >
+                        Disconnect linked Google account
+                      </button>
+                    </div>
+                  )}
+                </form>
+              )}
+
+            </div>
+
             </div>
           </div>
         )
