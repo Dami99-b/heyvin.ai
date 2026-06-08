@@ -39,6 +39,7 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
   const [selectedSound, setSelectedSound] = useState<string | null>(null);
   const [synthVolume, setSynthVolume] = useState<number>(40);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
 
   // Clean up Audio Context on unmount
   useEffect(() => {
@@ -107,7 +108,7 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
   ];
 
   // Web Audio Synth Generator for Focus Beats
-  const playFocusSound = (type: string) => {
+  const playFocusSound = async (type: string) => {
     try {
       // Shutdown old sound
       if (audioContextRef.current) {
@@ -123,42 +124,109 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
       const ctx = new AudioCtx();
       audioContextRef.current = ctx;
 
-      const osc = ctx.createOscillator();
       const gainNode = ctx.createGain();
+      gainNodeRef.current = gainNode;
 
-      if (type === "Peaceful Waves") {
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(140, ctx.currentTime);
-        // Soft modulation to emulate water flow
-        const mod = ctx.createOscillator();
-        const modGain = ctx.createGain();
-        mod.frequency.value = 0.25;
-        modGain.gain.value = 10;
-        mod.connect(modGain);
-        modGain.connect(osc.frequency);
-        mod.start();
-      } else if (type === "Deep Focus Drone") {
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(90, ctx.currentTime);
-      } else if (type === "Binaural Study Beat") {
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(125, ctx.currentTime);
-      }
-
-      // Filter high frequencies out for a smooth dark drone sound
+      // Filter high frequencies out slightly for a smooth dark drone sound, but allow mid frequencies to pass (raised cutoff for small laptop speakers)
       const filter = ctx.createBiquadFilter();
       filter.type = "lowpass";
-      filter.frequency.value = 150;
+      filter.frequency.setValueAtTime(600, ctx.currentTime);
+
+      if (type === "Peaceful Waves") {
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(220, ctx.currentTime); // A3 (Warm, highly audible base)
+        
+        // Harmonic overtone for smaller speakers (laptops/phones)
+        const harmonic = ctx.createOscillator();
+        harmonic.type = "sine";
+        harmonic.frequency.setValueAtTime(440, ctx.currentTime); // A4 (Octave up)
+        const harmonicGain = ctx.createGain();
+        harmonicGain.gain.setValueAtTime(0.08, ctx.currentTime);
+        
+        // Tremolo LFO to synthesize gentle rising and falling seawater tide patterns
+        const tideLFO = ctx.createOscillator();
+        tideLFO.frequency.setValueAtTime(0.18, ctx.currentTime); // ~5.5-second tide cycles
+        const tideGain = ctx.createGain();
+        tideGain.gain.setValueAtTime(0.04, ctx.currentTime);
+        
+        tideLFO.connect(tideGain);
+        tideGain.connect(gainNode.gain); // Modulate volume dynamically
+        
+        osc.connect(filter);
+        harmonic.connect(harmonicGain);
+        harmonicGain.connect(filter);
+        
+        osc.start();
+        harmonic.start();
+        tideLFO.start();
+      } else if (type === "Deep Focus Drone") {
+        // Multi-frequency resonance layer (delivers rich depth on bass headphones AND clarity on laptops)
+        const oscBase = ctx.createOscillator();
+        oscBase.type = "triangle";
+        oscBase.frequency.setValueAtTime(165, ctx.currentTime); // E3 (Warm mid base)
+        
+        const oscSub = ctx.createOscillator();
+        oscSub.type = "sine";
+        oscSub.frequency.setValueAtTime(82.5, ctx.currentTime); // E2 (Deep sub bass)
+        const subGain = ctx.createGain();
+        subGain.gain.setValueAtTime(0.12, ctx.currentTime);
+        
+        const oscHarmonic = ctx.createOscillator();
+        oscHarmonic.type = "sine";
+        oscHarmonic.frequency.setValueAtTime(247.5, ctx.currentTime); // B3 (Warm perfect fifth harmony)
+        const harmGain = ctx.createGain();
+        harmGain.gain.setValueAtTime(0.06, ctx.currentTime);
+        
+        oscBase.connect(filter);
+        
+        oscSub.connect(subGain);
+        subGain.connect(filter);
+        
+        oscHarmonic.connect(harmGain);
+        harmGain.connect(filter);
+        
+        oscBase.start();
+        oscSub.start();
+        oscHarmonic.start();
+      } else if (type === "Binaural Study Beat") {
+        // True Stereo Binaural Beat
+        const oscLeft = ctx.createOscillator();
+        const oscRight = ctx.createOscillator();
+        
+        oscLeft.type = "sine";
+        oscLeft.frequency.setValueAtTime(200, ctx.currentTime); // 200 Hz Left Channel
+        
+        oscRight.type = "sine";
+        oscRight.frequency.setValueAtTime(207.5, ctx.currentTime); // G3 + 7.5 Hz (Theta wave brain entrainment)
+        
+        try {
+          const merger = ctx.createChannelMerger(2);
+          oscLeft.connect(merger, 0, 0);
+          oscRight.connect(merger, 0, 1);
+          merger.connect(filter);
+        } catch (e) {
+          // Graceful fallback for mono-merged output
+          oscLeft.connect(filter);
+          oscRight.connect(filter);
+        }
+        
+        oscLeft.start();
+        oscRight.start();
+      }
 
       // Master volume scale
-      const volumeFloat = (synthVolume / 100) * 0.12;
+      const volumeFloat = (synthVolume / 100) * 0.18;
       gainNode.gain.setValueAtTime(volumeFloat, ctx.currentTime);
 
-      osc.connect(filter);
       filter.connect(gainNode);
       gainNode.connect(ctx.destination);
 
-      osc.start();
+      // Explicitly call resume to bypass modern browser autoplay restrictions
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
       setSelectedSound(type);
     } catch (e) {
       console.error("Focus beat synthesis failed:", e);
@@ -170,14 +238,15 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
       audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
     }
+    gainNodeRef.current = null;
     setSelectedSound(null);
   };
 
-  // Adjust volume dynamically while playing
+  // Adjust volume dynamically while playing (smooth volume slider changes without jarring sound restarts)
   useEffect(() => {
-    // Replay with new volume if already selected
-    if (selectedSound) {
-      playFocusSound(selectedSound);
+    if (gainNodeRef.current && audioContextRef.current) {
+      const volumeFloat = (synthVolume / 100) * 0.18;
+      gainNodeRef.current.gain.setValueAtTime(volumeFloat, audioContextRef.current.currentTime);
     }
   }, [synthVolume]);
 

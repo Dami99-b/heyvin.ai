@@ -422,48 +422,56 @@ function getGoogleRedirectUri(clientOrigin?: string, hostHeader?: string, reqPro
 
 // Google OAuth endpoints
 app.get("/api/auth/google/url", (req, res) => {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientOrigin = req.query.origin as string;
-  
-  const redirectUri = getGoogleRedirectUri(
-    clientOrigin,
-    req.get("host"),
-    req.secure || req.headers["x-forwarded-proto"] === "https" ? "https" : "http"
-  );
-  
-  if (!clientId) {
-    console.warn("[Google OAuth] GOOGLE_CLIENT_ID not found. Directing to sandbox mode automatically.");
-    return res.json({ 
-      url: `/auth/callback?code=sandbox_code`, 
-      isSandbox: true,
-      message: "GOOGLE_CLIENT_ID is not configured. Falling back to sandbox test account."
+  try {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientOrigin = req.query.origin as string;
+    
+    const redirectUri = getGoogleRedirectUri(
+      clientOrigin,
+      req.get("host"),
+      req.secure || req.headers["x-forwarded-proto"] === "https" ? "https" : "http"
+    );
+    
+    if (!clientId) {
+      console.warn("[Google OAuth] GOOGLE_CLIENT_ID not found. Directing to sandbox mode automatically.");
+      return res.json({ 
+        url: `/auth/callback?code=sandbox_code`, 
+        isSandbox: true,
+        message: "GOOGLE_CLIENT_ID is not configured. Falling back to sandbox test account."
+      });
+    }
+
+    // Generate robust, secure state parameter verifying originating domain/intent
+    const encodedState = clientOrigin ? Buffer.from(clientOrigin).toString("base64") : "sandbox";
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "openid email profile",
+      prompt: "select_account",
+      state: encodedState
+    });
+
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+    console.log("[Google OAuth] Constructing Google Authorization Request:", {
+      redirectUri,
+      clientIdExists: !!clientId,
+      state: encodedState,
+      authUrl
+    });
+
+    res.json({ 
+      url: authUrl, 
+      isSandbox: false 
+    });
+  } catch (err: any) {
+    console.error("[Google OAuth ERROR] Fail to generate OAuth URL:", err);
+    res.status(500).json({
+      error: err.message || "Unknown error during Google OAuth initiation",
+      stack: err.stack
     });
   }
-
-  // Generate robust, secure state parameter verifying originating domain/intent
-  const encodedState = clientOrigin ? Buffer.from(clientOrigin).toString("base64") : "sandbox";
-
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    response_type: "code",
-    scope: "openid email profile",
-    prompt: "select_account",
-    state: encodedState
-  });
-
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-  console.log("[Google OAuth] Constructing Google Authorization Request:", {
-    redirectUri,
-    clientIdExists: !!clientId,
-    state: encodedState,
-    authUrl
-  });
-
-  res.json({ 
-    url: authUrl, 
-    isSandbox: false 
-  });
 });
 
 app.get(["/auth/callback", "/auth/callback/", "/api/auth/callback", "/api/auth/callback/", "/api/index"], async (req, res) => {

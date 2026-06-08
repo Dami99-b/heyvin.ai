@@ -183,7 +183,10 @@ export default function App() {
     try {
       const originParam = encodeURIComponent(window.location.origin);
       const res = await fetch(`/api/auth/google/url?origin=${originParam}`);
-      if (!res.ok) throw new Error("Could not construct OAuth authorization url");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
       const data = await res.json();
       
       // If we are in sandbox mode, skip popups entirely for 100% reliable instant walkthroughs!
@@ -214,12 +217,13 @@ export default function App() {
         triggerSuccessToast("Opening secure Google auth window...");
         window.location.href = targetUrl;
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Google login initiation went wrong:", err);
       setOauthLoading(false);
       
       // Local graceful sandbox fallback if server endpoint is unreachable or errors out
-      triggerSuccessToast("Gateway unreachable. Logging in with offline sandbox account.");
+      const detail = err && err.message ? `: ${err.message}` : "";
+      triggerSuccessToast(`Gateway unreachable${detail}. Logging in with offline sandbox account.`);
       setSignupName("Sovereign Sister");
       setSignupEmail("sister.sovereign@gmail.com");
       setGoogleAuthUser({ email: "sister.sovereign@gmail.com", name: "Sovereign Sister" });
