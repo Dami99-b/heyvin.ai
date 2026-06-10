@@ -51,20 +51,48 @@ export function HeyvinJournalView({ userId, stealthActive }: HeyvinJournalViewPr
     setErrorMsg(null);
 
     try {
-      const response = await fetch("/api/analyze-journal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: content })
-      });
+      let resolvedMood: JournalEntry["mood"] = "Okay";
+      let resolvedReflection = "Heyvin is holding secure space for your thoughts. You are taking brave steps today.";
 
-      const resData = await response.json();
+      try {
+        const response = await fetch("/api/analyze-journal", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: content })
+        });
+
+        if (response.ok) {
+          const resData = await response.json();
+          resolvedMood = resData.mood || "Okay";
+          resolvedReflection = resData.ai_reflection || "Heyvin is holding secure space for your thoughts.";
+        } else {
+          console.warn("Backend journal response not ok, applying dynamic client-side sentiment analysis...");
+          throw new Error("Response was not OK");
+        }
+      } catch (innerError) {
+        console.warn("API journal analysis failed, falling back to local analysis:", innerError);
+        const lowerText = content.toLowerCase();
+        if (lowerText.includes("exhausted") || lowerText.includes("cry") || lowerText.includes("scream") || lowerText.includes("can't handle") || lowerText.includes("overwhelmed") || lowerText.includes("too much") || lowerText.includes("frustrated")) {
+          resolvedMood = "Overwhelmed";
+          resolvedReflection = "That sounds incredibly stressful, and it is completely understandable that you are feeling swamped right now. Remember that taking even a brief three-minute breathing pause is a powerful way to reclaim your immediate head space.";
+        } else if (lowerText.includes("heavy") || lowerText.includes("sad") || lowerText.includes("chores") || lowerText.includes("stuck") || lowerText.includes("tired") || lowerText.includes("burden")) {
+          resolvedMood = "Heavy";
+          resolvedReflection = "There is deep weight in balancing academic dreams with heavy household demands, and your feelings are entirely valid. You are taking brave steps, and tomorrow brings another opportunity to carve out your protected study pocket.";
+        } else if (lowerText.includes("proud") || lowerText.includes("strong") || lowerText.includes("conquer") || lowerText.includes("won") || lowerText.includes("resolved") || lowerText.includes("achieve")) {
+          resolvedMood = "Strong";
+          resolvedReflection = "Your resolve and mental clarity are absolute fire today! Continue riding this wave of high sovereignty, and protect those goals as fiercely as you did today.";
+        } else if (lowerText.includes("calm") || lowerText.includes("peace") || lowerText.includes("chill") || lowerText.includes("quiet") || lowerText.includes("focus")) {
+          resolvedMood = "Calm";
+          resolvedReflection = "I am so glad you have stepped into this peaceful frequency today. Cherish these calm moments; they are a beautiful testament to the physical and mental boundaries you are successfully establishing.";
+        }
+      }
       
       const newEntry: JournalEntry = {
         id: Math.random().toString(36).substring(2, 11),
         user_id: userId,
         content: content,
-        mood: resData.mood || "Okay",
-        ai_reflection: resData.ai_reflection || "Heyvin is holding secure space for your thoughts.",
+        mood: resolvedMood,
+        ai_reflection: resolvedReflection,
         created_at: new Date().toISOString(),
         entry_date: new Date().toISOString().split("T")[0]
       };

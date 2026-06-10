@@ -131,6 +131,10 @@ export default function App() {
     if (sessionUser) {
       setCurrentUser(sessionUser);
       loadUserData(sessionUser.uid);
+      // Active pull sync from Supabase if keys exist
+      db.syncFromCloud(sessionUser.uid).then(() => {
+        loadUserData(sessionUser.uid);
+      });
     }
   }, []);
 
@@ -1068,8 +1072,9 @@ export default function App() {
                   Contact Us
                 </a>
               </div>
+            </div>
             {/* Right Panel: Active Credential Forms */}
-            <div className="lg:col-span-7 p-6 sm:p-12 md:p-16 lg:p-20 flex flex-col justify-center max-w-3xl mx-auto w-full space-y-8 font-sans">
+            <div className="lg:col-span-7 p-6 sm:p-12 md:p-16 lg:p-20 flex flex-col justify-center max-w-4xl mx-auto w-full space-y-8 font-sans">
               
               {/* Stepper Progress Indicator */}
               <div className="flex items-center justify-between pb-4 border-b border-orange-100/30">
@@ -1273,66 +1278,79 @@ export default function App() {
 
               {/* STEP 2: DOMESTIC & ENVIRONMENT ENVIRONMENT */}
               {signUpStep === 2 && (
-                <div className="space-y-4 animate-fadeIn">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#7A6860] block">Where are you based?</label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {(['Nigeria', 'India', 'Mexico', 'Other'] as const).map((country) => (
+                <div className="space-y-6 animate-fadeIn w-full">
+                  <div className="space-y-3">
+                    <label className="text-[11px] font-extrabold uppercase tracking-widest text-[#7C2D3E] block font-mono">1. Where are you based?</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {[
+                        { name: 'Nigeria', flag: '🇳🇬' },
+                        { name: 'India', flag: '🇮🇳' },
+                        { name: 'Mexico', flag: '🇲🇽' },
+                        { name: 'Other', flag: '🌍' }
+                      ].map((country) => (
                         <button
-                          key={country}
+                          key={country.name}
                           type="button"
-                          onClick={() => setSignupBasedIn(country)}
-                          className={`py-2 px-1 rounded-xl text-[10px] font-bold border transition-all cursor-pointer text-center ${
-                            signupBasedIn === country
-                              ? "border-[#E28E75] bg-rose-50 text-amber-950 font-extrabold"
-                              : "border-gray-200 text-gray-400 bg-white"
+                          onClick={() => setSignupBasedIn(country.name as any)}
+                          className={`py-3 sm:py-4 px-2 rounded-2xl border transition-all cursor-pointer text-center flex flex-col items-center justify-center gap-1.5 shadow-xs hover:scale-[1.02] hover:shadow-sm ${
+                            signupBasedIn === country.name
+                              ? "border-[#7C2D3E] bg-[#7C2D3E]/5 text-amber-950 ring-2 ring-[#7C2D3E]/10"
+                              : "border-gray-200 text-gray-500 bg-white hover:border-gray-300"
                           }`}
                         >
-                          {country}
+                          <span className="text-2xl sm:text-3xl leading-none">{country.flag}</span>
+                          <span className="text-xs font-extrabold font-sans tracking-wide">{country.name}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#7A6860] block">What is your current Home Living situation?</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="space-y-3">
+                    <label className="text-[11px] font-extrabold uppercase tracking-widest text-[#7C2D3E] block font-mono">2. What is your current Home Living situation?</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {[
-                        { val: 'Living with parents', desc: 'Frequent spontaneous chore assignments' },
-                        { val: 'Partner', desc: 'Shared task delegation schedule' },
-                        { val: 'In-laws', desc: 'High cultural priority on domestic attendance' },
-                        { val: 'Siblings', desc: 'Dynamic shared study interruptions' },
-                        { val: 'Other', desc: 'Custom environment parameters' }
+                        { val: 'Living with parents', emoji: '🏡', desc: 'Frequent spontaneous chore assignments' },
+                        { val: 'Partner', emoji: '💑', desc: 'Shared task delegation schedule' },
+                        { val: 'In-laws', emoji: '👵🏽', desc: 'High cultural priority on domestic attendance' },
+                        { val: 'Siblings', emoji: '👧🏻👦🏽', desc: 'Dynamic shared study interruptions' },
+                        { val: 'Other', emoji: '✨', desc: 'Custom environment parameters' }
                       ].map((sit) => (
                         <button
                           key={sit.val}
                           type="button"
                           onClick={() => setSignupHomeSituation(sit.val as any)}
-                          className={`p-3 rounded-xl text-left border text-xs transition-all cursor-pointer ${
+                          className={`p-4 rounded-2xl text-left border flex items-center gap-3.5 transition-all cursor-pointer shadow-xs hover:scale-[1.01] hover:shadow-sm ${
                             signupHomeSituation === sit.val
-                              ? "border-[#7C2D3E] bg-rose-50/40 font-bold"
+                              ? "border-[#7C2D3E] bg-[#7C2D3E]/5 ring-2 ring-[#7C2D3E]/10"
                               : "border-gray-200 bg-white hover:border-gray-300"
                           }`}
                         >
-                          <div className="#7C2D3E block leading-none font-bold text-amber-950">{sit.val}</div>
-                          <span className="text-[9px] text-[#7A6860] font-normal leading-tight block mt-1">{sit.desc}</span>
+                          <div className={`text-2xl p-2 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 ${
+                            signupHomeSituation === sit.val ? "bg-[#7C2D3E]/10 text-[#7C2D3E]" : "bg-gray-100 text-gray-400"
+                          }`}>
+                            {sit.emoji}
+                          </div>
+                          <div>
+                            <div className="block leading-snug font-bold text-amber-950 font-sans text-xs">{sit.val}</div>
+                            <span className="text-[10px] text-[#7A6860] font-normal leading-normal block mt-1">{sit.desc}</span>
+                          </div>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  <div className="pt-3 flex gap-2">
+                  <div className="pt-4 flex gap-3">
                     <button
                       type="button"
                       onClick={() => setSignUpStep(1)}
-                      className="py-3 px-4 rounded-xl text-xs font-bold text-amber-900 border border-orange-200 hover:bg-orange-50 bg-white transition-all cursor-pointer"
+                      className="py-3 px-5 rounded-xl text-xs font-bold text-amber-900 border border-orange-200 hover:bg-orange-50 bg-white transition-all cursor-pointer"
                     >
                       Back
                     </button>
                     <button
                       type="button"
                       onClick={() => setSignUpStep(3)}
-                      className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-white bg-amber-900 hover:bg-amber-950 transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 py-3 px-5 rounded-xl text-xs font-bold text-white bg-amber-900 hover:bg-amber-950 transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <span>Next: Select Goal</span>
                       <ArrowRight size={14} />
@@ -1415,7 +1433,6 @@ export default function App() {
 
             </div>
 
-            </div>
           </div>
         )
       ) : (

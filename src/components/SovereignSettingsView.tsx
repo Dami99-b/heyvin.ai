@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { 
   User, Mail, MapPin, Home, Target, Shield, RefreshCw, Trash2, 
-  Eye, EyeOff, Save, Check, Key, Smartphone, AlertTriangle 
+  Eye, EyeOff, Save, Check, Key, Smartphone, AlertTriangle, Sparkles, Loader2 
 } from "lucide-react";
 import { UserProfile } from "../types";
 import { db } from "../lib/supabase";
@@ -23,6 +23,42 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
   const [pinCode, setPinCode] = useState(() => localStorage.getItem(`heyvin_pin_${user.uid}`) || "");
   const [showPin, setShowPin] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+
+  // Premium membership & checkout state
+  const [isPro, setIsPro] = useState(false);
+  const [billingLoading, setBillingLoading] = useState(false);
+
+  React.useEffect(() => {
+    fetch(`/api/user/premium-status/${user.uid}`)
+      .then(res => res.json())
+      .then(data => setIsPro(!!data.is_pro))
+      .catch(e => console.error("Error loading subscription status:", e));
+  }, [user.uid]);
+
+  const handlePaystackCheckout = async () => {
+    setBillingLoading(true);
+    try {
+      const res = await fetch("/api/paystack/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email || `${user.username.toLowerCase()}@heyvin.ai`,
+          user_id: user.uid
+        })
+      });
+      const data = await res.json();
+      if (data.status && data.data?.authorization_url) {
+        window.location.href = data.data.authorization_url;
+      } else {
+        alert(data.error || "Paystack connection failed");
+      }
+    } catch (e: any) {
+      console.error("Paystack initialization crash:", e);
+      alert("Failed to initialize billing secure link.");
+    } finally {
+      setBillingLoading(false);
+    }
+  };
 
   // Clear data dialog state
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -248,6 +284,50 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
             <div className="border-t border-gray-150 pt-2 text-[10.5px] text-gray-500 font-serif italic">
               "Your intellectual pursuits are a sovereign domain. Safeguard your pacing."
             </div>
+          </div>
+
+          {/* Feature 4: Paystack billing subscription module block */}
+          <div className="p-4 bg-gradient-to-br from-orange-50/70 to-red-50/50 border border-orange-200/60 rounded-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-serif font-bold text-amber-950 flex items-center gap-1.5">
+                <Sparkles size={13} className="text-[#7C2D3E] animate-pulse" />
+                Heyvin Pro Upgrade
+              </h4>
+              <span className={`text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider ${
+                isPro 
+                  ? "bg-emerald-100 text-emerald-800 border border-emerald-200" 
+                  : "bg-orange-100 text-[#7C2D3E] border border-orange-200"
+              }`}>
+                {isPro ? "Active" : "₦2,000 / mo"}
+              </span>
+            </div>
+            
+            <p className="text-[11px] text-gray-700 leading-normal">
+              {isPro
+                ? "Congratulations! Your secure channel is boosted. You have infinite access to personal schedule templates, CBT grounding toolkits, and premium weekly reports."
+                : "Unlock sovereign focus with professional grade AI weekly forecasting, priority server bandwidth, and automated domestic schedule planners."
+              }
+            </p>
+            
+            {!isPro ? (
+              <button
+                type="button"
+                onClick={handlePaystackCheckout}
+                disabled={billingLoading}
+                className="w-full py-2.5 px-3 rounded-xl bg-[#7C2D3E] hover:bg-[#60202e] text-white text-xs font-bold transition-all uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm disabled:opacity-60 cursor-pointer"
+              >
+                {billingLoading ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Sparkles size={12} />
+                )}
+                <span>Upgrade via Paystack</span>
+              </button>
+            ) : (
+              <div className="text-center font-bold text-emerald-800 text-[10.5px] flex items-center justify-center gap-1.5 pt-1">
+                <span>✓ Premium Account Sovereign Active</span>
+              </div>
+            )}
           </div>
 
           <div className="p-4 bg-red-50/40 border border-red-100 rounded-xl space-y-4">

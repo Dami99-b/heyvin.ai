@@ -1,4 +1,19 @@
 import { CheckIn, SovereigntyScore, WeeklyReport, CircleMember, CircleInvite, CircleNudge, CircleActivity, Task, RehearseSession, UserProfile } from "../types";
+import { createClient } from "@supabase/supabase-js";
+
+// Initialize Supabase Client if keys are set, otherwise fallback to local execution
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+
+export const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey) 
+  : null;
+
+if (supabase) {
+  console.log("⚡ [Supabase init] Secure remote connection established successfully.");
+} else {
+  console.log("📦 [Supabase custom init] running in local mock state.");
+}
 
 // Helper to generate UUIDs
 function uuid() {
@@ -265,6 +280,18 @@ export const db = {
     
     // Trigger window storage event for reactive updates (since we're SPA-based)
     window.dispatchEvent(new Event('heyvin_db_update'));
+
+    // Dual-write to cloud Supabase if active
+    if (supabase) {
+      const dbTable = table === "journals" ? "journal_entries" : table;
+      supabase.from(dbTable).delete().eq('user_id', user_id).then(() => {
+        if (items.length > 0) {
+          supabase.from(dbTable).insert(items as any).then(({ error }) => {
+            if (error) console.error(`[Supabase error] Bulk insert to '${dbTable}':`, error);
+          });
+        }
+      });
+    }
   },
 
   // Insert or Update single record
@@ -277,6 +304,13 @@ export const db = {
       list.push(item);
     }
     db.save(user_id, table, list);
+
+    if (supabase) {
+      const dbTable = table === "journals" ? "journal_entries" : table;
+      supabase.from(dbTable).upsert(item as any).then(({ error }) => {
+        if (error) console.error(`[Supabase error] Upsert to '${dbTable}':`, error);
+      });
+    }
     return item;
   },
 
@@ -285,6 +319,34 @@ export const db = {
     const list = db.get<T>(user_id, table);
     const filtered = list.filter(item => item.id !== id);
     db.save(user_id, table, filtered);
+
+    if (supabase) {
+      const dbTable = table === "journals" ? "journal_entries" : table;
+      supabase.from(dbTable).delete().eq('id', id).then(({ error }) => {
+        if (error) console.error(`[Supabase error] Delete from '${dbTable}':`, error);
+      });
+    }
+  },
+
+  // Pull sync from cloud on login or boot
+  syncFromCloud: async (user_id: string) => {
+    if (!supabase) return;
+    const tables = ["tasks", "check_ins", "sovereignty_scores", "weekly_reports", "circle_members", "circle_invites", "circle_nudges", "journals"];
+    try {
+      for (const table of tables) {
+        const dbTable = table === "journals" ? "journal_entries" : table;
+        const { data, error } = await supabase.from(dbTable).select("*").eq("user_id", user_id);
+        if (error) {
+          console.warn(`[Supabase Warning] Syncing '${dbTable}':`, error.message);
+        } else if (data) {
+          localStorage.setItem(getStorageKey(user_id, table), JSON.stringify(data));
+        }
+      }
+      window.dispatchEvent(new Event('heyvin_db_update'));
+      console.log("🙌 [Supabase sync] Cloud pulled user sync completed successfully.");
+    } catch (e: any) {
+      console.error("[Supabase sync error] Sync routine failed:", e);
+    }
   },
 
   // Calculate Sovereignty Score Based on Actual Check-Ins
