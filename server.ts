@@ -475,7 +475,7 @@ app.get("/api/auth/google/url", (req, res) => {
     const encodedState = clientOrigin ? Buffer.from(clientOrigin).toString("base64") : "sandbox";
 
     const params = new URLSearchParams({
-      client_id: clientId!,
+      client_id: clientId || "",
       redirect_uri: redirectUri,
       response_type: "code",
       scope: "openid email profile",
