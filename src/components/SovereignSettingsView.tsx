@@ -59,7 +59,7 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
 
   const handlePaystackCheckout = () => {
     setBillingLoading(true);
-    setPaystackLoadingText("Connecting with Paystack secure sandbox...");
+    setPaystackLoadingText("Connecting with Paystack secure payment system...");
     setTimeout(() => {
       setBillingLoading(false);
       setShowPaystackExpress(true);
@@ -286,7 +286,7 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
               <Shield size={13} className="text-emerald-700" /> Local Autonomy Protection
             </h4>
             <p className="text-[11px] text-[#7A6860] leading-relaxed">
-              Heyvin AI operates entirely on client-side sandboxing, secure pseudonym algorithms, and temporary server proxies. Your family members, domestic partners, and network hosts have zero visibility of your career blueprints.
+              Heyvin operates with private localized hosting, secure pseudonym accounts, and automated offline data backup. Your family members, domestic partners, and network hosts have zero visibility of your career blueprints.
             </p>
             <div className="border-t border-gray-150 pt-2 text-[10.5px] text-gray-500 font-serif italic">
               "Your intellectual pursuits are a sovereign domain. Safeguard your pacing."
@@ -341,7 +341,7 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
                   }}
                   className="w-full py-1.5 px-3 text-[10px] text-amber-900 border border-amber-800/20 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl transition-all font-bold tracking-wide cursor-pointer"
                 >
-                  ⚡ Sandbox Instant Bypass (Unlock Pro)
+                  ⚡ Instant Pro Bypass (Unlock Pro)
                 </button>
               </div>
             ) : (
@@ -381,7 +381,7 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
             ) : (
               <div className="space-y-3 animate-fadeIn">
                 <p className="text-[10px] text-red-800 leading-normal">
-                  Warning: Triggering a database purge instantly deletes your logs, saved CBT cards, check-in history, journals, and signed session metrics. This cannot be undone.
+                  Warning: Purging your local workspace instantly deletes your logs, saved CBT cards, check-in history, journals, and signed session metrics. This cannot be undone.
                 </p>
                 <label className="flex items-start gap-2 select-none cursor-pointer">
                   <input
@@ -478,7 +478,7 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
                     <div className="text-center pb-2 border-b border-gray-50">
                       <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest font-mono">Simulated Charge</span>
                       <div className="text-2xl font-serif font-black text-amber-950 mt-1">NGN 2,000</div>
-                      <span className="text-[10px] text-emerald-600 font-bold font-mono tracking-wide">● Sandbox Test Mode</span>
+                      <span className="text-[10px] text-emerald-600 font-bold font-sans tracking-wide">● Secure Test Mode</span>
                     </div>
 
                     <div className="space-y-2 text-xs">

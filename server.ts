@@ -838,6 +838,7 @@ app.get(["/auth/callback", "/auth/callback/", "/api/auth/callback", "/api/auth/c
 
   let email = "sister.sovereign@gmail.com";
   let name = "Sovereign Sister";
+  let errorMsg: string | null = null;
   const isSandbox = !process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || code === "sandbox_code";
 
   console.log("[Google OAuth CALLBACK] Callback request received:", {
@@ -918,9 +919,64 @@ app.get(["/auth/callback", "/auth/callback/", "/api/auth/callback", "/api/auth/c
       name = userInfo.given_name || userInfo.name || name;
     } catch (e: any) {
       console.error("[Google OAuth CALLBACK] Token exchange workflow crashed:", e.message || e);
+      errorMsg = e.message || String(e);
     }
   } else {
     console.log("[Google OAuth CALLBACK] Skipping real token exchange: system running in secure local Sandbox mode.");
+  }
+
+  if (errorMsg) {
+    res.send(`
+      <html>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 40px; background: #FAF7F2; color: #1A1414; margin: 0;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 35px; border-radius: 20px; border: 1px solid #7C2D3E; background: white; box-shadow: 0 4px 20px rgba(124,45,62,0.06); text-align: left;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+              <span style="font-size: 28px; line-height: 1;">⚠️</span>
+              <h3 style="font-family: Georgia, serif; color: #7C2D3E; margin: 0; font-size: 22px; font-weight: 900;">Google OAuth Configuration Error</h3>
+            </div>
+            
+            <p style="font-size: 14px; color: #4A3932; font-weight: 500; line-height: 1.6; margin-top: 0;">
+              Your Vercel deployment reached out to Google securely, but the authentication hand-shake was rejected by Google. Here is the direct error trace:
+            </p>
+            
+            <div style="background: #FFF5F5; border-left: 4px solid #EA4335; padding: 16px; border-radius: 8px; margin: 18px 0; font-family: monospace; font-size: 13px; color: #C53030; word-break: break-all; line-height: 1.4;">
+              ${errorMsg}
+            </div>
+
+            <h4 style="margin: 24px 0 12px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #7C2D3E;">Follow these quick setup steps to fix it right now:</h4>
+            
+            <ol style="font-size: 13.5px; color: #5A4A42; line-height: 1.6; padding-left: 20px; margin-bottom: 30px;">
+              <li style="margin-bottom: 12px;">
+                <strong>Verify Authorized Redirect URIs inside Google Cloud Console:</strong> Make sure you have entered the exact calculated Redirect URI in your Google Developers workspace:
+                <div style="background: #F3ECE0; padding: 10px 14px; border-radius: 8px; font-family: monospace; font-size: 12px; margin: 8px 0; color: #1A1414; word-break: break-all; border: 1px solid #E2D8C9;">
+                  ${getGoogleRedirectUri(
+                    state && state !== "sandbox" ? Buffer.from(state, "base64").toString("utf-8") : undefined,
+                    req.get("host"),
+                    req.secure || req.headers["x-forwarded-proto"] === "https" ? "https" : "http"
+                  )}
+                </div>
+              </li>
+              <li style="margin-bottom: 12px;">
+                <strong>Confirm Client Secret & ID in Vercel:</strong> Head to your Vercel Project Dashboard settings and double check that <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> are entered and fully synchronized.
+              </li>
+              <li style="margin-bottom: 12px;">
+                <strong>Local sandbox fallback:</strong> Since browsers can isolate tabs inside virtual frames, you can also bypass Google and login instantly with our fully featured secure Local Pseudonym Sandbox directly on the signup screen.
+              </li>
+            </ol>
+
+            <div style="border-top: 1px solid #EDE8E0; padding-top: 24px; display: flex; gap: 12px;">
+              <a href="/" style="display: inline-block; background: #7C2D3E; text-decoration: none; text-align: center; color: white; padding: 12px 20px; border-radius: 12px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 0.02em;">
+                Back to Dashboard
+              </a>
+              <button onclick="window.close()" style="display: inline-block; background: #FAF7F2; border: 1px solid #EDE8E0; text-align: center; color: #4A3932; padding: 12px 20px; border-radius: 12px; font-weight: bold; font-size: 12px; text-transform: uppercase; cursor: pointer;">
+                Close Tab
+              </button>
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+    return;
   }
 
   res.send(`

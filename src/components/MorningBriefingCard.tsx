@@ -129,7 +129,7 @@ export function MorningBriefingCard({
       )}
 
       <div className="text-[10px] text-gray-400 font-sans">
-        💡 {stealthActive ? "Analysis compiled from curriculum task syllabus." : "Weekly routine telemetry synchronized securely."}
+        💡 {stealthActive ? "Analysis compiled from curriculum task syllabus." : "Weekly routine summary prepared successfully."}
       </div>
     </div>
   );

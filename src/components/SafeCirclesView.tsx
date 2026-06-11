@@ -249,7 +249,7 @@ export default function SafeCirclesView({ user, stealthActive }: SafeCirclesView
       <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 flex gap-3 text-xs leading-relaxed text-gray-500">
         <Lock size={20} className="text-gray-400 flex-shrink-0 mt-0.5" />
         <p>
-          <strong>Heyvin Cryptographic Privacy Architecture:</strong> Your circle members explicitly view only your weekly aggregate Sovereignty Score (numeric indicator) and broad mood signposts in their feed. Your journals, checklist notes, homework categories, and voice rehearsals exist exclusively safe and locked on your local device — never exposed to external views.
+          <strong>Heyvin Privacy Protection:</strong> Your circle members explicitly view only your weekly aggregate Sovereignty Score (numeric indicator) and broad mood signposts in their feed. Your journals, checklist notes, homework categories, and voice rehearsals exist exclusively safe and locked on your local device — never exposed to external views.
         </p>
       </div>
 

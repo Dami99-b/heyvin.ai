@@ -111,8 +111,8 @@ export const PremiumUnlockScreen: React.FC<PremiumUnlockScreenProps> = ({ onUnlo
             <div>
               <span className="text-[10px] uppercase tracking-wider text-rose-300 block font-mono">SOVEREIGN ACCESS VALUE</span>
               <div className="flex items-baseline gap-1.5 mt-0.5">
-                <span className="text-2xl font-bold font-serif">$4.99</span>
-                <span className="text-rose-200/60 text-xs">/ month (Free Sandbox Trigger Below)</span>
+                <span className="text-2xl font-bold font-serif">₦2,000 / $1.49</span>
+                <span className="text-rose-200/60 text-xs">/ month (Free Trial Trigger Below)</span>
               </div>
             </div>
 
@@ -133,9 +133,9 @@ export const PremiumUnlockScreen: React.FC<PremiumUnlockScreenProps> = ({ onUnlo
       <div className="mt-6 bg-amber-100/20 border border-amber-900/10 rounded-xl p-4 flex items-start gap-3">
         <Sparkles size={16} className="text-amber-800 mt-0.5 shrink-0 animate-pulse" />
         <div className="space-y-1">
-          <p className="text-xs font-bold text-amber-950">Developer Sandbox Sandbox Mode Available</p>
+          <p className="text-xs font-bold text-amber-950">Instant Local Secure Upgrade Available</p>
           <p className="text-[11px] text-amber-900/75 leading-relaxed font-sans">
-            Heyvin AI integrates real sandboxed database hooks. Click <strong>"Instant Activate Premium"</strong> above to instantly simulate a secure checkout. Try accessing the Dark mode toggle, Journals, or Reports subsequently!
+            Heyvin integrates private localized space states. Click <strong>"Instant Activate Premium"</strong> above to instantly simulate a secure upgrade. Try accessing the Dark mode toggle, Journals, or Reports subsequently!
           </p>
         </div>
       </div>

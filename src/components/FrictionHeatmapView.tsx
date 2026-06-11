@@ -334,7 +334,7 @@ export function FrictionHeatmapView({ userId, stealthActive }: FrictionHeatmapVi
         <div>
           <p className="font-semibold text-amber-950 font-serif">Deep Sovereignty Insights</p>
           <p className="mt-0.5 font-sans">
-            This map displays your domestic friction telemetry over the past quarter. Each box marks an individual day. Hover to trace trends, identify recurrent patterns, and protect critical study windows before relatives or responsibilities request them.
+            This map displays your domestic friction patterns over the past quarter. Each box marks an individual day. Hover to trace trends, identify recurrent patterns, and protect critical study windows before relatives or responsibilities request them.
           </p>
         </div>
       </div>

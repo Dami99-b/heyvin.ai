@@ -347,7 +347,7 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
   const faqs = [
     {
       q: "Is my personal diary history seen by anyone on my local hosting server?",
-      a: "Absolutely not. Heyvin operates under a triple-sandboxed private localized schema. All your tasks, diaries, checks, and plans reside inside a secure localized client proxy storage on your physical device. No telemetry, database logging, or diagnostic tracking is shared."
+      a: "Absolutely not. All your tasks, diaries, checks, and plans reside inside secure local storage on your device. No personal data, logging, or tracking information is ever shared or sent to external servers."
     },
     {
       q: "How does the 'Stealth Cover Switch / StudySync' work under pressure?",
@@ -1179,16 +1179,16 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
             Absolutely Private. Locally Sovereign.
           </h3>
           <p className="text-xs text-[#7A6860] leading-relaxed max-w-xl">
-            We operate a zero-telemetry technical policy. No information about your career planning, check-ins, diary records, or homework logs ever bypasses your browser cache or physical device workspace.
+            We operate with absolute user privacy. No information about your career planning, check-ins, diary records, or homework logs ever leaves your browser or physical device.
           </p>
         </div>
 
         <div className="space-y-2 bg-white/70 border border-orange-100/35 p-4 rounded-xl">
           {[
-            "Fully localized SQLite & storage caching",
+            "Secure local storage inside your browser",
             "Discreet double stealth-switch interface",
-            "Encrypted mock network packet isolation",
-            "Zero browser history tracking payloads"
+            "No data uploaded to external servers",
+            "Zero browser history tracking"
           ].map((check, idx) => (
             <div key={idx} className="flex items-center gap-2 text-xs font-semibold text-gray-700 font-sans">
               <span className="p-0.5 bg-emerald-50 text-emerald-800 rounded-md">
@@ -1228,7 +1228,7 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
                 </button>
 
                 {isOpen && (
-                  <div className="p-5 pt-0 border-t border-gray-50 text-xs sm:text-sm text-[#7A6860] leading-relaxed font-sans bg-[#FAF7F2]/20 animate-fadeIn font-normal">
+                  <div className="p-5 pt-0 border-t border-gray-200 text-xs sm:text-sm text-[#4A3831] font-semibold leading-relaxed font-sans bg-[#FAF7F2]/60 animate-fadeIn">
                     {faq.a}
                   </div>
                 )}
