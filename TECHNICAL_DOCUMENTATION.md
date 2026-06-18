@@ -118,8 +118,47 @@ Heyvin’s architecture is structured to protect student privacy first, support 
   ```
   This launches a sandboxed webhook page that lets the user simulate a payment. Upon approval, it triggers a mock success webhook payload to the server-side, upgrading the browser profile instantly to "Pro" via state variables.
 
-<a name="4-security-and-privacy"></a>
-## 🔒 4. Sovereign Security, Encryption & Privacy Measures
+---
+
+<a name="4-pitch-demonstration"></a>
+## 🎤 4. Pitch Demonstration Script (Live Stage Guide)
+
+Use this script during live judges walkthroughs or investor presentations. It is tested to highlight the deep value proposition of Heyvin in under 4 minutes.
+
+### 🎭 Chapter 1: The Hook (The Struggle is Real)
+- **Presenter Action**: Open the application's main landing page on screen. Scroll to the descriptive overview and scroll down.
+- **Pitch Narrative**: 
+  > *"Every productivity tool today is built for workers who sit in quiet offices or have full control of their rooms. But what about millions of young women in traditional homes? They deal with systemic domestic friction, household chores, and caretakers. They are constantly struggling to protect their study hours. Meet Amina, an ambitious coding student. Her day is fragmented. Traditional calendars fail her because a domestic request is never scheduled. This is why we built Heyvin — her private, sovereign mental sanctuary."*
+
+### 🔒 Chapter 2: Onboard Amina (Multi-Channel Secure Entry)
+- **Presenter Action**: Click **"Create Your Safe Space Instantly"** on the landing page. Point out that the initial account generation form is completely client-first, requests no invasive database tracking, and secures credentials with a Sovereign local password.
+- **Pitch Narrative**:
+  > *"We onboard Amina with zero invasive data tracking. She signs in securely with Google or enters a pseudonym name. Her plans, journals, and timetables are fully localized—never sold or parsed by third parties."*
+
+### 🗺️ Chapter 3: Calibration & Country Backgrounds
+- **Presenter Action**: On Stage 2 of registration, select **Nigeria** (or **India** / **Mexico**). Watch the country flag, selection borders, and local context load with a subtle backdrop. Select **"Living with Parents"** as the environment context, then click next.
+- **Pitch Narrative**:
+  > *"Because domestic situations dictate how boundaries must be negotiated, Heyvin calibrates to her unique physical environment. We localize and pull regional contexts — including tailored patterns and support advisors. Look at how her selection transforms the experience."*
+
+### 🛡️ Chapter 4: The Core Feature Demo (The 1-Second Rescue)
+- **Presenter Action**: From her main focus dashboard, click on the top **"HEYVIN AI"** logo text, or double-tap. Witness the screen instantly transform into **StudySync** (an unassuming, dry academic course curriculum about math and statistical models).
+- **Pitch Narrative**:
+  > *"Imagine Amina is planning her next career steps or reviewing her private journal. Suddenly, her parent walks in unannounced. Under high-stakes home surveillance, a privacy breach causes immediate friction. Amina simply taps our logo—and in milliseconds, Heyvin drops into 'StudySync Mode,' an unassuming academic syllabus interface. There are no tell-tale settings menus or popups. Her real plans are shielded. Tap again, and they return with absolute security."*
+
+### 🧠 Chapter 5: AI Journal & Older Sister counsel
+- **Presenter Action**: Go to her **"Heyvin Journal"**, write: *"Feeling so exhausted trying to study while sibling noise is loud and parents keep calling me for kitchen chores."* Click **"Safely Analyze Entry"**.
+- **Pitch Narrative**:
+  > *"Amina vents her frustration safely here. Our server-side Gemini 3.5 engine analyzes her mood, validates her feelings, and delivers an älder-sister' reframe. No preachy language, just direct, warm, practical encouragement to protect her mental battery."*
+
+### Analytics: The Heatmap & Pro Upgrade
+- **Presenter Action**: Show the **Friction Heatmap**. Point out how it compiles quiet periods vs. high-disruption periods so Amina has actual data to negotiate her study periods. Finally, click **"Upgrade via Paystack"** in settings, type card details, and experience the upgrade.
+- **Pitch Narrative**:
+  > *"By backing herself with data and setting clear boundaries, Amina claims her sovereignty. We track her score and help her negotiate library passes or private blocks. Investors, Heyvin is not just a widget; it's a social-impact autonomy accelerator. Thank you."*
+
+---
+
+<a name="5-security-and-privacy"></a>
+## 🔒 5. Sovereign Security, Encryption & Privacy Measures
 
 Heyvin was built from the ground up prioritizing absolute client trust and physical device safety.
 
