@@ -11,7 +11,7 @@ interface Article {
   avatarBg: string;
   location: string;
   timeAgo: string;
-  category: 'Stealth Tips' | 'Success Stories' | 'Chore hacks' | 'Aspirations';
+  category: 'Study Hacks' | 'Success Stories' | 'Chore hacks' | 'Aspirations';
   title: string;
   summary: string;
   content: string;
@@ -29,15 +29,15 @@ export function SovereignChroniclesFeed() {
       avatarBg: "bg-red-500",
       location: "Yaba, Lagos, Nigeria",
       timeAgo: "2 hours ago",
-      category: "Stealth Tips",
-      title: "How I hid my React study repo as an 'Intro to Cookery' pdf",
-      summary: "My parents believe women belong purely in domestic administration. Here is how I set up my desktop screen & folder structures to deflect immediate checking.",
-      content: "Whenever my father approaches, I trigger a seamless shortcut to restore an full-width PDF on culinary arts. On my actual shell, I keep node servers running in stealth. I've reclaimed four hours daily and just cleared my intermediate certification!",
+      category: "Study Hacks",
+      title: "How I structured my study times using real data tracking",
+      summary: "Here is how I structured my daily household chores and study routines to secure quality, quiet blocks for intermediate certification prep.",
+      content: "Whenever family checks in, my precise visual dashboards present clear academic/work schedules. I run node servers locally to track time metrics. I have reclaimed four hours daily and just cleared my intermediate test!",
       likes: 42,
       commentsCount: 3,
       initialComments: [
-        { sister: "Delhi_Delta_9", text: "Brilliant! I do the exact same with my Python folders named as local accounting ledgers.", time: "1h ago" },
-        { sister: "Oaxaca_Coder", text: "This level of stealth planning is what saves degrees. Stay sovereign sister!", time: "45m ago" }
+        { sister: "Delhi_Delta_9", text: "Brilliant! I do the exact same with my Python folders and local spreadsheets.", time: "1h ago" },
+        { sister: "Oaxaca_Coder", text: "This level of structured planning is what saves degrees. Stay sovereign sister!", time: "45m ago" }
       ]
     },
     {
@@ -95,7 +95,7 @@ export function SovereignChroniclesFeed() {
     }
   ]);
 
-  const [selectedCategory, setSelectedCategory] = useState<'All' | 'Stealth Tips' | 'Success Stories' | 'Chore hacks' | 'Aspirations'>('All');
+  const [selectedCategory, setSelectedCategory] = useState<'All' | 'Study Hacks' | 'Success Stories' | 'Chore hacks' | 'Aspirations'>('All');
   const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
   
   // Custom user commentary states
@@ -157,13 +157,13 @@ export function SovereignChroniclesFeed() {
             The Sovereign Chronicles
           </h2>
           <p className="text-xs text-[#7A6860] mt-1 font-sans max-w-lg leading-relaxed">
-            Real diary snapshots, tactical chore negotiations, and stealth-study frameworks curated from our global network of resilient, ambitious sisters.
+            Real diary snapshots, tactical chore negotiations, and structured study frameworks curated from our global network of resilient, ambitious sisters.
           </p>
         </div>
 
         {/* Quick horizontal categories selector */}
         <div className="flex flex-wrap gap-1.5 text-xs font-sans">
-          {(['All', 'Stealth Tips', 'Success Stories', 'Chore hacks', 'Aspirations'] as const).map(cat => (
+          {(['All', 'Study Hacks', 'Success Stories', 'Chore hacks', 'Aspirations'] as const).map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
@@ -193,7 +193,7 @@ export function SovereignChroniclesFeed() {
               {/* Category indicator pill */}
               <div className="flex items-center justify-between">
                 <span className={`text-[9.5px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-md border ${
-                  art.category === 'Stealth Tips' ? "bg-amber-50 text-amber-900 border-amber-100" :
+                  art.category === 'Study Hacks' ? "bg-amber-50 text-amber-900 border-amber-100" :
                   art.category === 'Success Stories' ? "bg-emerald-50 text-emerald-900 border-emerald-100" :
                   art.category === 'Chore hacks' ? "bg-teal-50 text-teal-900 border-teal-100" :
                   "bg-rose-50 text-rose-900 border-rose-100"

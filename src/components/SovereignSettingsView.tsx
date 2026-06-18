@@ -475,15 +475,15 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
                     if (!paystackCardNum || !paystackExpiry || !paystackCvv) return;
                     setPaystackStage('pin');
                   }} className="space-y-4">
-                    <div className="text-center pb-2 border-b border-gray-50">
-                      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest font-mono">Simulated Charge</span>
+                    <div className="text-center pb-2 border-b border-gray-100">
+                      <span className="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest font-mono">Simulated Charge</span>
                       <div className="text-2xl font-serif font-black text-amber-950 mt-1">NGN 2,000</div>
-                      <span className="text-[10px] text-emerald-600 font-bold font-sans tracking-wide">● Secure Test Mode</span>
+                      <span className="text-[10px] text-emerald-700 font-bold font-sans tracking-wide">● Secure Test Mode</span>
                     </div>
 
                     <div className="space-y-2 text-xs">
                       <div className="space-y-1">
-                        <label className="text-[9.5px] uppercase font-extrabold tracking-wider text-gray-400 font-mono">Card Number</label>
+                        <label className="text-[9.5px] uppercase font-extrabold tracking-wider text-gray-700 font-mono">Card Number</label>
                         <input
                           type="text"
                           required
@@ -499,14 +499,14 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
                             }
                             setPaystackCardNum(parts.length > 0 ? parts.join(' ') : v);
                           }}
-                          className="w-full p-2.5 border border-gray-250 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:outline-none focus:border-emerald-500 font-mono text-center tracking-widest text-xs bg-white text-gray-800"
+                          className="w-full p-2.5 border border-gray-400 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:outline-none focus:border-emerald-600 font-mono text-center tracking-widest text-xs bg-white text-gray-900 shadow-xs"
                           maxLength={19}
                         />
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <label className="text-[9.5px] uppercase font-extrabold tracking-wider text-gray-400 font-mono">Expiry</label>
+                          <label className="text-[9.5px] uppercase font-extrabold tracking-wider text-gray-700 font-mono">Expiry</label>
                           <input
                             type="text"
                             required
@@ -520,30 +520,33 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
                                 setPaystackExpiry(v);
                               }
                             }}
-                            className="w-full p-2.5 border border-gray-250 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:outline-none focus:border-emerald-500 font-mono text-center text-xs bg-white text-gray-800"
+                            className="w-full p-2.5 border border-gray-400 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:outline-none focus:border-emerald-600 font-mono text-center text-xs bg-white text-gray-900 shadow-xs"
                             maxLength={5}
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[9.5px] uppercase font-extrabold tracking-wider text-gray-400 font-mono">CVV</label>
+                          <label className="text-[9.5px] uppercase font-extrabold tracking-wider text-gray-700 font-mono">CVV</label>
                           <input
                             type="password"
                             required
                             placeholder="•••"
                             value={paystackCvv}
                             onChange={(e) => setPaystackCvv(e.target.value.replace(/[^0-9]/g, ''))}
-                            className="w-full p-2.5 border border-gray-250 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:outline-none focus:border-emerald-500 font-mono text-center text-xs bg-white text-gray-800"
+                            className="w-full p-2.5 border border-gray-400 rounded-lg focus:ring-2 focus:ring-emerald-600 focus:outline-none focus:border-emerald-600 font-mono text-center text-xs bg-white text-gray-900 shadow-xs"
                             maxLength={3}
                           />
                         </div>
                       </div>
                     </div>
 
+                    <div className="text-[10px] text-gray-500 font-medium font-sans text-center leading-normal">
+                      💡 Click pay to verify utilizing the sandbox card!
+                    </div>
+
                     <button
                       type="submit"
-                      disabled={paystackCardNum.length < 16 || paystackExpiry.length < 5 || paystackCvv.length < 3}
-                      style={{ backgroundColor: '#059669', color: '#ffffff', opacity: (paystackCardNum.length < 16 || paystackExpiry.length < 5 || paystackCvv.length < 3) ? 0.6 : 1 }}
-                      className="w-full py-3 px-4 rounded-xl text-white font-extrabold text-xs uppercase tracking-widest transition-all cursor-pointer shadow-md hover:scale-[1.01] block border-2 border-emerald-700"
+                      disabled={paystackCardNum.replace(/\s+/g, '').length < 12 || paystackExpiry.replace(/\s+/g, '').length < 4 || paystackCvv.length < 3}
+                      className="w-full py-3 px-4 rounded-xl text-white font-extrabold text-xs uppercase tracking-widest transition-all cursor-pointer shadow-md bg-emerald-600 hover:bg-emerald-700 border-2 border-emerald-800 disabled:opacity-40"
                     >
                       Pay NGN 2,000
                     </button>
@@ -558,8 +561,8 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
                   }} className="space-y-4 my-auto">
                     <div className="text-center space-y-1">
                       <span className="text-xl">🔑</span>
-                      <h4 className="text-sm font-bold text-gray-800 font-sans">Enter Card PIN</h4>
-                      <p className="text-[10px] text-gray-400 leading-relaxed">Please provide your secure 4-digit bank card authorization number.</p>
+                      <h4 className="text-sm font-bold text-gray-900 font-sans">Enter Card PIN</h4>
+                      <p className="text-[10px] text-gray-600 leading-relaxed">Please provide your secure 4-digit bank card authorization number.</p>
                     </div>
 
                     <input
@@ -568,15 +571,14 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
                       placeholder="••••"
                       value={paystackPin}
                       onChange={(e) => setPaystackPin(e.target.value.replace(/[^0-9]/g, ''))}
-                      className="w-24 mx-auto block p-2.5 border border-gray-250 rounded-lg focus:ring-1 focus:ring-emerald-500 text-center font-mono text-lg tracking-widest focus:outline-none bg-white text-gray-800"
+                      className="w-24 mx-auto block p-2.5 border border-gray-400 rounded-lg focus:ring-2 focus:ring-emerald-600 text-center font-mono text-lg tracking-widest focus:outline-none bg-white text-gray-950"
                       maxLength={4}
                     />
 
                     <button
                       type="submit"
                       disabled={paystackPin.length < 4}
-                      style={{ backgroundColor: '#059669', color: '#ffffff', opacity: paystackPin.length < 4 ? 0.6 : 1 }}
-                      className="w-full py-2.5 rounded-lg text-white font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer border-2 border-emerald-700"
+                      className="w-full py-2.5 rounded-lg text-white font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer bg-emerald-600 hover:bg-emerald-700 border-2 border-emerald-800 disabled:opacity-40"
                     >
                       Authorize Transaction
                     </button>
@@ -613,8 +615,8 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
                   }} className="space-y-4 my-auto">
                     <div className="text-center space-y-1">
                       <span className="text-xl">📲</span>
-                      <h4 className="text-sm font-bold text-gray-800 font-sans">Authorize with OTP</h4>
-                      <p className="text-[9.5px] text-gray-400 leading-relaxed">A test authentication code was sent to your phone. Use <strong className="text-emerald-700">1234</strong> to bypass:</p>
+                      <h4 className="text-sm font-bold text-gray-900 font-sans">Authorize with OTP</h4>
+                      <p className="text-[9.5px] text-gray-600 leading-relaxed font-sans">A test authentication code was sent to your phone. Use <strong className="text-emerald-700 font-black">1234</strong> to bypass:</p>
                     </div>
 
                     <input
@@ -623,15 +625,14 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
                       placeholder="1234"
                       value={paystackOtp}
                       onChange={(e) => setPaystackOtp(e.target.value.replace(/[^0-9]/g, ''))}
-                      className="w-28 mx-auto block p-2.5 border border-gray-250 rounded-lg focus:ring-1 focus:ring-emerald-500 text-center font-mono text-base tracking-widest focus:outline-none bg-white text-gray-800"
+                      className="w-28 mx-auto block p-2.5 border border-gray-400 rounded-lg focus:ring-2 focus:ring-emerald-600 text-center font-mono text-base tracking-widest focus:outline-none bg-white text-gray-900"
                       maxLength={4}
                     />
 
                     <button
                       type="submit"
                       disabled={paystackOtp.length < 4}
-                      style={{ backgroundColor: '#059669', color: '#ffffff', opacity: paystackOtp.length < 4 ? 0.6 : 1 }}
-                      className="w-full py-2.5 rounded-lg text-white font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer border-2 border-emerald-700"
+                      className="w-full py-2.5 rounded-lg text-white font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer bg-emerald-600 hover:bg-emerald-700 border-2 border-emerald-800 disabled:opacity-40"
                     >
                       Authenticate Payment
                     </button>

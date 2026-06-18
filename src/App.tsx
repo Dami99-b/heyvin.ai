@@ -127,9 +127,8 @@ export default function App() {
   };
 
   // Stealth Mode State
-  const [stealthActive, setStealthActive] = useState<boolean>(() => {
-    return localStorage.getItem("stealth_active") === "true";
-  });
+  const stealthActive = false;
+  const setStealthActive = (val: boolean) => {};
 
   // Guest Landing vs Register/Onboarding Navigation Screen State
   const [guestView, setGuestView] = useState<'landing' | 'auth'>('landing');
@@ -206,6 +205,82 @@ export default function App() {
     setTasks(db.get<Task>(uid, "tasks"));
   };
 
+  const handleDirectGoogleSignIn = async (email: string, name: string) => {
+    setOauthLoading(true);
+    try {
+      let profile: UserProfile | null = null;
+      
+      // 1. Check if Supabase client is available to look up existing user by email
+      if (supabase) {
+        try {
+          const { data: profileQuery } = await supabase
+            .from("user_profiles")
+            .select("*")
+            .eq("email", email.trim());
+          
+          if (profileQuery && profileQuery.length > 0) {
+            const profileData = profileQuery[0];
+            profile = {
+              uid: profileData.uid,
+              email: profileData.email,
+              username: profileData.username || profileData.username_pseudonym || "Sovereign Sister",
+              location: profileData.location || "Other",
+              based_in: profileData.based_in || "Other",
+              home_situation: profileData.home_situation || "Living with parents",
+              primary_goal: profileData.primary_goal || "University degree",
+              created_at: profileData.created_at || new Date().toISOString()
+            };
+          }
+        } catch (dbErr) {
+          console.warn("[Google Signin DB Query exception]", dbErr);
+        }
+      }
+
+      // 2. If no remote profile was resolved, create one automatically
+      if (!profile) {
+        const uid = "goog_" + Math.random().toString(36).substr(2, 9);
+        profile = {
+          uid,
+          email: email.trim(),
+          username: name.trim() || email.split("@")[0],
+          location: "Other",
+          based_in: "Nigeria", // default onboarding parameter
+          home_situation: "Living with parents", // default onboarding parameter
+          primary_goal: "University degree", // default onboarding parameter
+          created_at: new Date().toISOString()
+        };
+
+        // Seed initial mock data for this user so their view starts populated with useful samples
+        seedUserData(uid, "Other");
+        
+        if (supabase) {
+          try {
+            await supabase.from("user_profiles").upsert(profile);
+          } catch (saveErr) {
+            console.warn("[Google Signin DB Save Profile failed, fallback offline]", saveErr);
+          }
+        }
+      }
+
+      // Silent/Secure authentication with Supabase if active
+      if (supabase) {
+        await authenticateSupabase(profile.uid);
+      }
+
+      // Log the user in fully by updating state & local storage!
+      localStorage.setItem("heyvin_current_user", JSON.stringify(profile));
+      setCurrentUser(profile);
+      loadUserData(profile.uid);
+      
+      triggerSuccessToast(`Welcome, ${profile.username}! Connected seamlessly via Google 🛡️`);
+    } catch (err: any) {
+      console.error("[Direct Google sign-in failed]", err);
+      triggerSuccessToast("⚠️ Error authenticating with secure Google Vault: " + err.message);
+    } finally {
+      setOauthLoading(false);
+    }
+  };
+
   // Listen to inner storage update alerts for live updates
   useEffect(() => {
     const handler = () => {
@@ -224,11 +299,7 @@ export default function App() {
     const oauthEmail = params.get('oauth_email');
     const oauthName = params.get('oauth_name');
     if (oauthEmail && oauthName) {
-      setSignupName(oauthName);
-      setSignupEmail(oauthEmail);
-      setGoogleAuthUser({ email: oauthEmail, name: oauthName });
-      triggerSuccessToast(`Google credentials connected: ${oauthEmail} 🛡️`);
-      setSignUpStep(2);
+      handleDirectGoogleSignIn(oauthEmail, oauthName);
       // Clean up URL parameters to keep address bar pristine
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -250,13 +321,7 @@ export default function App() {
       if (event.data?.type === 'GOOGLE_OAUTH_SUCCESS' && event.data?.user) {
         setOauthLoading(false);
         const { name, email } = event.data.user;
-        
-        // Let's set prefilled signup details to save effort!
-        setSignupName(name);
-        setSignupEmail(email);
-        setGoogleAuthUser({ email, name });
-        triggerSuccessToast(`Google credentials connected: ${email} 🛡️`);
-        setSignUpStep(2);
+        handleDirectGoogleSignIn(email, name);
       }
     };
 
@@ -270,11 +335,7 @@ export default function App() {
             // Check if this result is recent (less than 2 minutes old) to avoid stale launches
             if (Date.now() - (parsed.timestamp || 0) < 120000) {
               setOauthLoading(false);
-              setSignupName(parsed.name);
-              setSignupEmail(parsed.email);
-              setGoogleAuthUser({ email: parsed.email, name: parsed.name });
-              triggerSuccessToast(`Google credentials connected: ${parsed.email} 🛡️`);
-              setSignUpStep(2);
+              handleDirectGoogleSignIn(parsed.email, parsed.name);
             }
             localStorage.removeItem("heyvin_google_oauth_result");
           }
@@ -302,17 +363,6 @@ export default function App() {
       }
       const data = await res.json();
       
-      // If we are in sandbox mode, skip popups entirely for 100% reliable instant walkthroughs!
-      if (data.isSandbox || (data.url && data.url.includes("sandbox_code"))) {
-        setOauthLoading(false);
-        setSignupName("Sovereign Sister");
-        setSignupEmail("sister.sovereign@gmail.com");
-        setGoogleAuthUser({ email: "sister.sovereign@gmail.com", name: "Sovereign Sister" });
-        triggerSuccessToast("Local Offline Space Applied: sister.sovereign@gmail.com 🛡️");
-        setSignUpStep(2);
-        return;
-      }
-
       let targetUrl = data.url;
       if (targetUrl.startsWith("/")) {
         targetUrl = `${window.location.origin}${targetUrl}`;
@@ -335,11 +385,7 @@ export default function App() {
       setOauthLoading(false);
       
       // Local highly-effective sandbox fallback if server endpoint is unreachable or is compiling
-      setSignupName("Sovereign Sister");
-      setSignupEmail("sister.sovereign@gmail.com");
-      setGoogleAuthUser({ email: "sister.sovereign@gmail.com", name: "Sovereign Sister" });
-      triggerSuccessToast("Local Offline Space Applied: sister.sovereign@gmail.com 🛡️");
-      setSignUpStep(2);
+      handleDirectGoogleSignIn("sister.sovereign@gmail.com", "Sovereign Sister");
     }
   };
 
@@ -1028,7 +1074,7 @@ export default function App() {
       {/* Authentication / Onboarding view */}
       {!currentUser ? (
         guestView === 'landing' ? (
-          <div className="min-h-screen w-full flex flex-col items-center justify-between p-4 sm:p-8 bg-gradient-to-b from-[#FAF7F2] via-[#F5EFE4] to-[#FAF7F2] lg:from-[#F3ECE0] lg:via-[#FAF7F2] lg:to-[#FAF7F2] text-[#1A1414] font-sans relative overflow-y-auto select-none">
+          <div className="min-h-screen w-full flex flex-col items-center justify-between p-4 sm:p-8 bg-gradient-to-b from-[#FAF7F2] via-[#F4EFE6] to-[#E9DFCF] text-[#1A1414] font-sans relative overflow-y-auto select-none">
             {/* Landing page top header bar */}
             <div className="w-full max-w-5xl flex items-center justify-between py-4 border-b border-[#EDE8E0] mb-8">
               <div className="flex items-center gap-2">
@@ -1238,7 +1284,7 @@ export default function App() {
             </div>
 
             {/* Footer */}
-            <div className="w-full max-w-5xl py-6 border-t border-[#EDE8E0] flex flex-col sm:flex-row items-center justify-between text-xs text-[#7A6860] gap-4 mt-8">
+            <div className="w-full max-w-5xl py-6 border-t border-[#D6CDBA] flex flex-col sm:flex-row items-center justify-between text-xs text-[#3E2E28] font-bold gap-4 mt-8">
               <div>
                 © 2026 Heyvin Team. All Rights Reserved. Absolute privacy and local data encryption.
               </div>
@@ -1247,10 +1293,10 @@ export default function App() {
                   href="https://youtube.com/@heyvinaiteam?si=lI8AsHrtGB1Ow9WS" 
                   target="_blank" 
                   rel="noreferrer noopener"
-                  className="inline-flex items-center gap-1.5 text-xs text-[#7A6860] hover:text-red-600 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs text-[#3E2E28] hover:text-[#7C2D3E] transition-colors"
                   id="landing_youtube_contact"
                 >
-                  <Youtube size={14} className="text-red-500 hover:scale-110 transition-transform" />
+                  <Youtube size={14} className="text-red-600 hover:scale-110 transition-transform" />
                   <span>Contact Us (YouTube)</span>
                 </a>
               </div>
@@ -1520,9 +1566,9 @@ export default function App() {
 
                   {/* Prefilled indicator if using Google */}
                   {googleAuthUser && (
-                    <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl flex items-center justify-between">
+                    <div className="bg-emerald-50 border border-emerald-150 p-3 rounded-xl flex items-center justify-between mb-4">
                       <div>
-                        <span className="text-[9px] font-bold text-emerald-800 uppercase block">Secure Google Vault Linked</span>
+                        <span className="text-[10px] font-bold text-emerald-800 uppercase block">Secure Google Vault Linked</span>
                         <span className="text-[10.5px] font-semibold text-emerald-950 font-mono block">{signupEmail}</span>
                       </div>
                       <span className="p-1 bg-emerald-600 text-white rounded-full text-[10px]">
@@ -1532,49 +1578,52 @@ export default function App() {
                   )}
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#7A6860]">First Name / Pseudonym</label>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-gray-700">First Name / Pseudonym</label>
                     <input
                       type="text"
                       required
                       placeholder="Pricilla"
                       value={signupName}
                       onChange={(e) => setSignupName(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-[#7C2D3E]/10 text-gray-800 bg-white focus:outline-none"
+                      className="w-full p-3 rounded-xl border border-gray-400 text-xs focus:ring-2 focus:ring-amber-500/20 text-gray-900 bg-white focus:outline-none placeholder-gray-400 shadow-xs"
                     />
                   </div>
 
                   {!googleAuthUser && (
-                    <div className="space-y-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-[#4A3932]">Study-Safe Email Address</label>
-                        <input
-                          type="email"
-                          required
-                          placeholder="pricilla@gmail.com"
-                          value={signupEmail}
-                          onChange={(e) => setSignupEmail(e.target.value)}
-                          className="w-full p-3 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-[#7C2D3E]/10 text-gray-800 bg-white focus:outline-none"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-[#4A3932]">Sovereign Password</label>
-                        <input
-                          type="password"
-                          required
-                          placeholder="••••••••"
-                          value={signupPassword}
-                          onChange={(e) => setSignupPassword(e.target.value)}
-                          className="w-full p-3 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-[#7C2D3E]/10 text-gray-800 bg-white focus:outline-none"
-                        />
-                      </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-gray-700">Study-Safe Email Address</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="pricilla@gmail.com"
+                        value={signupEmail}
+                        onChange={(e) => setSignupEmail(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-gray-400 text-xs focus:ring-2 focus:ring-amber-500/20 text-gray-900 bg-white focus:outline-none placeholder-gray-400 shadow-xs"
+                      />
                     </div>
                   )}
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-gray-700">
+                      {googleAuthUser ? "Set Local Sovereign Password (for local vault security)" : "Sovereign Password / Vault Key"}
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-gray-400 text-xs focus:ring-2 focus:ring-amber-500/20 text-gray-900 bg-white focus:outline-none placeholder-gray-400 shadow-xs"
+                    />
+                    <p className="text-[9px] text-gray-500 font-mono leading-none">
+                      This secure password encrypts your local study records inside this device.
+                    </p>
+                  </div>
 
                   <div className="pt-3">
                     <button
                       type="button"
-                      disabled={!signupName.trim() || (!googleAuthUser && (!signupEmail.trim() || !signupPassword.trim()))}
+                      disabled={!signupName.trim() || !signupPassword.trim() || (!googleAuthUser && !signupEmail.trim())}
                       onClick={() => setSignUpStep(2)}
                       className="w-full py-3 px-4 rounded-xl text-xs font-bold text-white bg-amber-900 hover:bg-amber-950 transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
                     >
@@ -1601,19 +1650,20 @@ export default function App() {
                           key={country.name}
                           type="button"
                           onClick={() => setSignupBasedIn(country.name as any)}
-                          className={`relative overflow-hidden group py-4 sm:py-5 px-2 rounded-2xl border transition-all cursor-pointer text-center flex flex-col items-center justify-center gap-1.5 shadow-sm hover:scale-[1.03] hover:shadow-md ${
+                          className={`relative overflow-hidden group py-4 sm:py-5 px-2 rounded-2xl border transition-all cursor-pointer text-center flex flex-col items-center justify-center gap-1.5 shadow-md hover:scale-[1.03] hover:shadow-lg ${
                             signupBasedIn === country.name
-                              ? "border-[#7C2D3E] bg-[#7C2D3E]/10 text-[#54121e] ring-2 ring-[#7C2D3E]/30 font-black"
-                              : "border-gray-300 text-gray-800 bg-white hover:border-[#7C2D3E]/60"
+                              ? "border-[#7C2D3E] bg-[#7C2D3E]/20 text-[#1A1414] ring-2 ring-[#7C2D3E]/40 font-black"
+                              : "border-gray-400 text-gray-800 bg-white hover:border-[#7C2D3E]"
                           }`}
                         >
                           <div 
-                            className="absolute inset-0 bg-cover bg-center opacity-10 transition-opacity group-hover:opacity-15 rounded-2xl pointer-events-none" 
+                            className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-45 transition-opacity rounded-2xl pointer-events-none" 
                             style={{ backgroundImage: `url(${country.bgImage})` }} 
                           />
-                          <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-2xl sm:text-3xl leading-none filter drop-shadow-sm">{country.flag}</span>
-                            <span className="text-[11px] font-extrabold font-sans tracking-wide mt-1 block uppercase">{country.name}</span>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-50 rounded-2xl pointer-events-none" />
+                          <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none bg-white/95 backdrop-blur-xs py-2 px-3 rounded-xl border border-gray-200/50 shadow-xs max-w-[90%] mx-auto">
+                            <span className="text-3xl filter drop-shadow-md leading-none">{country.flag}</span>
+                            <span className="text-[10px] font-black font-sans tracking-wide mt-1 block uppercase text-[#1A1414]">{country.name}</span>
                           </div>
                         </button>
                       ))}
@@ -1637,7 +1687,7 @@ export default function App() {
                           className={`p-4 rounded-2xl text-left border flex items-center gap-3.5 transition-all cursor-pointer shadow-sm hover:scale-[1.01] hover:shadow-md ${
                             signupHomeSituation === sit.val
                               ? "border-[#7C2D3E] bg-[#7C2D3E]/10 ring-2 ring-[#7C2D3E]/30"
-                              : "border-gray-300 bg-white hover:border-gray-450 text-gray-850"
+                              : "border-gray-400 bg-white hover:border-gray-500 text-gray-850"
                           }`}
                         >
                           <div className={`text-2xl p-2 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 ${
@@ -1692,7 +1742,7 @@ export default function App() {
                           className={`p-3.5 rounded-xl text-left border text-xs transition-all cursor-pointer shadow-xs hover:scale-[1.01] hover:shadow-sm ${
                             signupPrimaryGoal === goalOption.val
                               ? "border-[#7C2D3E] bg-[#7C2D3E]/10 ring-2 ring-[#7C2D3E]/30 font-black"
-                              : "border-gray-300 bg-white hover:border-[#7C2D3E]/45 text-gray-800"
+                              : "border-gray-400 bg-white hover:border-[#7C2D3E]/45 text-gray-900 shadow-xs"
                           }`}
                         >
                           <div className="block leading-none font-extrabold text-amber-950">{goalOption.val}</div>
