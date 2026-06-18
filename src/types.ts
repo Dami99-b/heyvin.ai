@@ -96,9 +96,12 @@ export interface Task {
 export interface RehearseSession {
   id: string;
   user_id: string;
-  topic: string;
-  situation: string;
-  transcript: string[];
+  topic?: string;
+  situation?: string;
+  transcript?: string[];
   analyzed_response: string;
   created_at: string;
+  scenario?: string;
+  user_response?: string;
+  ai_tips?: string[];
 }

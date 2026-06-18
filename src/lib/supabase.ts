@@ -503,8 +503,33 @@ export const db = {
     }
   },
 
+  getAllUsers: (): UserProfile[] => {
+    const listStr = localStorage.getItem("heyvin_all_registered_users");
+    if (!listStr) return [];
+    try {
+      return JSON.parse(listStr);
+    } catch {
+      return [];
+    }
+  },
+
+  createUser: (user: UserProfile) => {
+    db.updateUserProfile(user);
+  },
+
   updateUserProfile: (user: UserProfile) => {
     localStorage.setItem("heyvin_current_user", JSON.stringify(user));
+    
+    // Synchronize into heyvin_all_registered_users registry
+    const allUsers = db.getAllUsers();
+    const idx = allUsers.findIndex(u => u.uid === user.uid);
+    if (idx >= 0) {
+      allUsers[idx] = user;
+    } else {
+      allUsers.push(user);
+    }
+    localStorage.setItem("heyvin_all_registered_users", JSON.stringify(allUsers));
+
     if (supabase) {
       supabase.from("user_profiles").upsert({
         uid: user.uid,
