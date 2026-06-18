@@ -384,8 +384,8 @@ export default function App() {
       console.warn("[Google OAuth Graceful Fallback] Gateway unavailable:", err.message || err);
       setOauthLoading(false);
       
-      // Local highly-effective sandbox fallback if server endpoint is unreachable or is compiling
-      handleDirectGoogleSignIn("sister.sovereign@gmail.com", "Sovereign Sister");
+      // Notify the user of the setup/network scenario, prompting them to use the adjacent bypass button or check environmental keys
+      triggerSuccessToast("⚠️ Authentic connection failed. Choose your account in the popup, configure GOOGLE_CLIENT_ID in Vercel, or press 'Bypass' to enter!");
     }
   };
 

@@ -6,8 +6,8 @@
       "destination": "/api/index?__vercel_original_path=/api/:match*"
     },
     {
-      "source": "/auth/callback",
-      "destination": "/api/index?__vercel_original_path=/auth/callback"
+      "source": "/auth/:match*",
+      "destination": "/api/index?__vercel_original_path=/auth/:match*"
     },
     {
       "source": "/(.*)",
