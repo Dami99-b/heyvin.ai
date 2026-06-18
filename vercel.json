@@ -10,6 +10,10 @@
       "destination": "/api/index?__vercel_original_path=/auth/:match*"
     },
     {
+      "source": "/oauth/:match*",
+      "destination": "/api/index?__vercel_original_path=/oauth/:match*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

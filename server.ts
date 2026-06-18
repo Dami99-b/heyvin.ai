@@ -1155,6 +1155,49 @@ app.get("/api/auth/google/url", (req, res) => {
   }
 });
 
+app.get(["/oauth/consent", "/oauth/consent/", "/api/oauth/consent"], (req, res) => {
+  try {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientOrigin = (req.query.origin || `https://${req.get("host")}`) as string;
+    
+    const isMockId = !clientId || 
+                     clientId.trim() === "" || 
+                     clientId === "undefined" || 
+                     clientId.includes("YOUR_") || 
+                     clientId.includes("placeholder");
+
+    if (isMockId) {
+      console.warn("[Google OAuth Consent] GOOGLE_CLIENT_ID is empty or a placeholder. Directing to sandbox mode.");
+      return res.redirect(`/auth/mock-google?origin=${encodeURIComponent(clientOrigin)}`);
+    }
+
+    const redirectUri = getGoogleRedirectUri(
+      clientOrigin,
+      req.get("host"),
+      req.secure || req.headers["x-forwarded-proto"] === "https" ? "https" : "http"
+    );
+
+    const encodedState = clientOrigin ? Buffer.from(clientOrigin).toString("base64") : "sandbox";
+
+    const params = new URLSearchParams({
+      client_id: clientId || "",
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "openid email profile",
+      prompt: "select_account",
+      state: encodedState
+    });
+
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+    console.log("[Google OAuth Consent] Redirecting direct consent path to Google authorize:", authUrl);
+    
+    return res.redirect(authUrl);
+  } catch (err: any) {
+    console.error("[Google OAuth Consent ERROR] Fail to redirect, gracefully falling back:", err);
+    return res.redirect(`/auth/callback?code=sandbox_code`);
+  }
+});
+
 app.get(["/auth/callback", "/auth/callback/", "/api/auth/callback", "/api/auth/callback/", "/api/index"], async (req, res) => {
   const code = req.query.code as string;
   const state = req.query.state as string;
