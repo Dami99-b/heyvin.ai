@@ -655,12 +655,12 @@ export default function App() {
   return (
     <>
       {/* ===== GLOBAL ANIMATIONS ===== */}
-      {/* <AnimatedCursor /> */}
-      {/* <GradientMesh /> */}
+      <AnimatedCursor />
+      <GradientMesh />
 
       <div
         className={`min-h-screen will-change-transform flex flex-col font-sans transition-colors duration-300 ${themeClassContent} ${theme === "dark" ? "dark" : ""} relative overflow-hidden overflow-x-hidden`}
-  style={{ maxWidth: '100vw', overflowX: 'hidden' }}
+        style={{ maxWidth: "100vw", overflowX: "hidden" }}
       >
         {/* Subtle background watermark */}
         {!stealthActive && currentUser && (
@@ -830,10 +830,9 @@ export default function App() {
             /* ── LANDING PAGE ─────────────────────────────────── */
             <div className="min-h-screen w-full flex flex-col items-center justify-between p-4 sm:p-8 bg-gradient-to-b from-[#FAF7F2] via-[#F5EFE4] to-[#FAF7F2] lg:from-[#F3ECE0] lg:via-[#FAF7F2] lg:to-[#FAF7F2] text-[#1A1414] font-sans relative overflow-y-auto select-none">
               {/* Floating decorative shapes */}
-              <div className="absolute top-20 left-10 w-64 h-64 rounded-full bg-gradient-warm opacity-5 animate-float-shape" />
-              <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-gradient-gold opacity-5 animate-orb-pulse" />
-              <div className="absolute top-40 right-20 w-48 h-48 rounded-full bg-brand-terracotta opacity-5 animate-slow-rotate" />
-
+              <div className="absolute top-20 left-10 w-48 h-48 rounded-full bg-gradient-warm opacity-5 animate-float-shape" />
+              <div className="absolute bottom-20 right-10 w-64 h-64 rounded-full bg-gradient-gold opacity-5 animate-orb-pulse" />
+              <div className="absolute top-40 right-20 w-32 h-32 rounded-full bg-brand-terracotta opacity-5 animate-slow-rotate" />
               {/* Floating particles */}
               <div className="absolute top-1/4 left-1/4 w-3 h-3 rounded-full bg-brand-wine animate-float-particle" />
               <div
@@ -871,8 +870,7 @@ export default function App() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center text-left w-full">
                   {/* Left: copy */}
                   <div className="lg:col-span-7 space-y-6">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-[#7C2D3E] font-semibold text-xs uppercase tracking-wider animate-fade-up-delay-1">
-                    </div>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-[#7C2D3E] font-semibold text-xs uppercase tracking-wider animate-fade-up-delay-1"></div>
 
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-serif tracking-tight text-[#1A1414] leading-tight">
                       <AnimatedGradientText
