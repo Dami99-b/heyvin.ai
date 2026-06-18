@@ -259,6 +259,66 @@ export default function App() {
   });
 
   useEffect(() => {
+    const checkSupabaseSession = async () => {
+      if (!supabase) return;
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (session && session.user) {
+          const sbUser = session.user;
+          const userEmail = sbUser.email || "";
+          
+          // Hunt for user profile by email or Supabase uid in registry
+          const allUsers = db.getAllUsers();
+          let matchedUser = allUsers.find(
+            (u: UserProfile) => u.email.toLowerCase() === userEmail.toLowerCase() || u.uid === sbUser.id
+          );
+          
+          if (!matchedUser) {
+            // Unregistered OAuth. Provision beautiful base profile.
+            const name = sbUser.user_metadata?.full_name || sbUser.user_metadata?.name || userEmail.split("@")[0] || "Sovereign Sister";
+            matchedUser = {
+              uid: sbUser.id,
+              username: name,
+              email: userEmail,
+              location: "Other",
+              based_in: "Other",
+              home_situation: "Living with parents",
+              primary_goal: "Career growth",
+              created_at: new Date().toISOString(),
+            };
+            db.createUser(matchedUser);
+            seedUserData(matchedUser.uid, matchedUser.location);
+          }
+          
+          // Log in locally
+          setCurrentUser(matchedUser);
+          localStorage.setItem("heyvin_current_user", JSON.stringify(matchedUser));
+          
+          // Bind setGoogleAuthUser for UI indicator
+          setGoogleAuthUser({
+            email: userEmail,
+            name: matchedUser.username,
+          });
+          
+          loadUserData(matchedUser.uid);
+          
+          // sync
+          db.syncFromCloud(matchedUser.uid).then(() => {
+            loadUserData(matchedUser.uid);
+          });
+
+          triggerSuccessToast(`Welcome back, ${matchedUser.username}! 🛡️`);
+          
+          // Clear URL hash cleanly
+          if (window.history.pushState) {
+            window.history.pushState("", document.title, window.location.pathname + window.location.search);
+          }
+        }
+      } catch (err) {
+        console.error("Error retrieving Supabase session on startup:", err);
+      }
+    };
+
     const sessionUser = getActiveUser();
     if (sessionUser) {
       setCurrentUser(sessionUser);
@@ -268,6 +328,19 @@ export default function App() {
           loadUserData(sessionUser.uid),
         );
       });
+      
+      if (supabase) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session && session.user) {
+            setGoogleAuthUser({
+              email: session.user.email || "",
+              name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split("@")[0] || "Sovereign Sister",
+            });
+          }
+        });
+      }
+    } else {
+      checkSupabaseSession();
     }
   }, []);
 
@@ -325,6 +398,9 @@ export default function App() {
     try {
       const result = await supabase?.auth.signInWithOAuth({
         provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
       });
       if (result?.error) throw result.error;
     } catch (err) {
