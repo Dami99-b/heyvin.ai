@@ -90,7 +90,22 @@ app.use((req, res, next) => {
       urlObj.pathname = originalPath;
       urlObj.searchParams.delete("__vercel_original_path");
       req.url = urlObj.pathname + urlObj.search;
-      console.log(`[ROUTE LOG] Restored request URL to: "${req.url}"`);
+
+      // Define writable path override so Express router matches on the restored path
+      Object.defineProperty(req, "path", {
+        value: urlObj.pathname,
+        writable: true,
+        configurable: true
+      });
+
+      // Synchronize req.query with the updated URL parameters
+      const restoredQuery: Record<string, any> = {};
+      urlObj.searchParams.forEach((val, key) => {
+        restoredQuery[key] = val;
+      });
+      req.query = restoredQuery;
+
+      console.log(`[ROUTE LOG] Restored request URL to: "${req.url}", path: "${req.path}", query:`, JSON.stringify(req.query));
     } catch (e: any) {
       console.error("[ROUTE LOG] Error while reconstructing original url:", e);
     }
