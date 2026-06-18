@@ -1097,3 +1097,410 @@ body {
   overflow-x: hidden !important;
   width: 100% !important;
 }
+
+/* ── TEAM / TEAM CARDS ── Branded with Heyvin Colors ────── */
+
+/* Container for team cards - add this class to your team grid */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  padding: 1rem 0;
+}
+
+/* Individual team card - targets elements with classes used in your app */
+.card.team-card,
+.team-card {
+  background: var(--color-surface-raised, #FFFFFF);
+  border-radius: var(--radius-2xl, 1.75rem);
+  border: 1px solid var(--color-border, #E8E0D5);
+  padding: 2rem 1.5rem 1.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(26,20,20,0.06));
+  cursor: default;
+}
+
+/* Top accent bar - brand gradient */
+.team-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #7C2D3E 0%, #C9983A 50%, #7C2D3E 100%);
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+
+/* Warm glow on hover */
+.team-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(124, 45, 62, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+
+.team-card:hover {
+  transform: translateY(-8px) scale(1.01);
+  border-color: rgba(201, 152, 58, 0.3);
+  box-shadow: 0 12px 40px rgba(124, 45, 62, 0.12), 0 4px 12px rgba(124, 45, 62, 0.06);
+}
+
+.team-card:hover::before {
+  opacity: 1;
+}
+
+.team-card:hover::after {
+  opacity: 1;
+}
+
+/* Avatar - uses the avatar image in team cards */
+.team-card .avatar,
+.team-card .team-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  position: relative;
+  background: linear-gradient(135deg, #7C2D3E 0%, #C9983A 100%);
+  padding: 3px;
+}
+
+.team-card .avatar img,
+.team-card .team-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--color-surface-raised, #FFFFFF);
+  transition: transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.team-card:hover .avatar img,
+.team-card:hover .team-avatar img {
+  transform: scale(1.05);
+}
+
+/* Avatar glow ring */
+.team-card .avatar::after,
+.team-card .team-avatar::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(201, 152, 58, 0.2), transparent 70%);
+  opacity: 0;
+  transition: opacity 400ms ease;
+  z-index: -1;
+}
+
+.team-card:hover .avatar::after,
+.team-card:hover .team-avatar::after {
+  opacity: 1;
+}
+
+/* Name - typically h3 or .name */
+.team-card .name,
+.team-card h3 {
+  font-family: var(--font-serif, 'Lora', serif);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #1A1414);
+  margin: 0.5rem 0 0.25rem;
+  letter-spacing: -0.01em;
+}
+
+.team-card .name .highlight,
+.team-card h3 .highlight {
+  background: linear-gradient(135deg, #7C2D3E 0%, #C9983A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Role / title - typically .role or .title */
+.team-card .role,
+.team-card .title {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #C9983A;
+  background: rgba(201, 152, 58, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid rgba(201, 152, 58, 0.15);
+  margin-bottom: 0.75rem;
+}
+
+/* Bio / description */
+.team-card .bio,
+.team-card .description {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #6B5C54);
+  line-height: 1.6;
+  margin: 0.75rem 0 1rem;
+  font-weight: 400;
+}
+
+/* Social links container */
+.team-card .social-links,
+.team-card .social {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border, #E8E0D5);
+}
+
+.team-card .social-links a,
+.team-card .social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full, 9999px);
+  background: transparent;
+  color: var(--color-text-muted, #9D8C82);
+  border: 1px solid var(--color-border, #E8E0D5);
+  transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.team-card .social-links a:hover,
+.team-card .social a:hover {
+  background: linear-gradient(135deg, #7C2D3E 0%, #A63D2F 100%);
+  color: white;
+  border-color: #7C2D3E;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(124, 45, 62, 0.25);
+}
+
+.team-card .social-links a svg,
+.team-card .social a svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── FEATURED VARIANT ── */
+.team-card.featured,
+.team-card--featured {
+  border-color: rgba(201, 152, 58, 0.3);
+  background: linear-gradient(135deg, rgba(124, 45, 62, 0.03) 0%, rgba(201, 152, 58, 0.03) 100%);
+}
+
+.team-card.featured::before,
+.team-card--featured::before {
+  opacity: 1;
+  background: linear-gradient(90deg, #C9983A 0%, #7C2D3E 50%, #C9983A 100%);
+}
+
+.team-card.featured .avatar,
+.team-card.featured .team-avatar,
+.team-card--featured .avatar,
+.team-card--featured .team-avatar {
+  background: linear-gradient(135deg, #C9983A 0%, #7C2D3E 100%);
+}
+
+.team-card.featured .role,
+.team-card.featured .title,
+.team-card--featured .role,
+.team-card--featured .title {
+  background: linear-gradient(135deg, rgba(124, 45, 62, 0.1), rgba(201, 152, 58, 0.1));
+  border-color: rgba(201, 152, 58, 0.2);
+  color: #7C2D3E;
+}
+
+/* ── MINIMAL VARIANT ── */
+.team-card.minimal,
+.team-card--minimal {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 1.5rem 1rem;
+}
+
+.team-card.minimal .avatar,
+.team-card.minimal .team-avatar,
+.team-card--minimal .avatar,
+.team-card--minimal .team-avatar {
+  width: 80px;
+  height: 80px;
+}
+
+.team-card.minimal::before,
+.team-card.minimal::after,
+.team-card--minimal::before,
+.team-card--minimal::after {
+  display: none;
+}
+
+.team-card.minimal:hover,
+.team-card--minimal:hover {
+  transform: translateY(-4px);
+  background: var(--color-surface-sunken, #F3EDE4);
+  border-radius: var(--radius-xl, 1.25rem);
+}
+
+/* ── ANIMATION ── */
+.team-card.animate,
+.team-card--animate {
+  animation: teamCardIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.team-card.animate:nth-child(1),
+.team-card--animate:nth-child(1) { animation-delay: 0.05s; }
+.team-card.animate:nth-child(2),
+.team-card--animate:nth-child(2) { animation-delay: 0.1s; }
+.team-card.animate:nth-child(3),
+.team-card--animate:nth-child(3) { animation-delay: 0.15s; }
+.team-card.animate:nth-child(4),
+.team-card--animate:nth-child(4) { animation-delay: 0.2s; }
+.team-card.animate:nth-child(5),
+.team-card--animate:nth-child(5) { animation-delay: 0.25s; }
+.team-card.animate:nth-child(6),
+.team-card--animate:nth-child(6) { animation-delay: 0.3s; }
+
+@keyframes teamCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Avatar pulse */
+.avatar.pulse,
+.team-avatar.pulse {
+  animation: avatarPulse 3s ease-in-out infinite;
+}
+
+@keyframes avatarPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 45, 62, 0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(124, 45, 62, 0); }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .team-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+    padding: 0.5rem;
+  }
+  
+  .team-card {
+    padding: 1.5rem 1rem 1.25rem;
+  }
+  
+  .team-card .avatar,
+  .team-card .team-avatar {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .team-card .name,
+  .team-card h3 {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .team-grid {
+    grid-template-columns: 1fr;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+}
+
+/* ── DARK MODE ── */
+.dark .team-card {
+  background: var(--color-surface-raised, #1A1414);
+  border-color: var(--color-border, #2D2020);
+}
+
+.dark .team-card:hover {
+  border-color: rgba(201, 152, 58, 0.2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.dark .team-card::after {
+  background: radial-gradient(ellipse at 50% 0%, rgba(124, 45, 62, 0.12) 0%, transparent 70%);
+}
+
+.dark .team-card .avatar img,
+.dark .team-card .team-avatar img {
+  border-color: var(--color-surface-raised, #1A1414);
+}
+
+.dark .team-card .social-links a,
+.dark .team-card .social a {
+  border-color: var(--color-border, #2D2020);
+  color: var(--color-text-muted, #6B5550);
+}
+
+.dark .team-card .social-links a:hover,
+.dark .team-card .social a:hover {
+  background: linear-gradient(135deg, #7C2D3E 0%, #A63D2F 100%);
+  color: white;
+  border-color: #7C2D3E;
+}
+
+.dark .team-card.featured,
+.dark .team-card--featured {
+  background: linear-gradient(135deg, rgba(124, 45, 62, 0.08) 0%, rgba(201, 152, 58, 0.05) 100%);
+}
+
+.dark .team-card.minimal:hover,
+.dark .team-card--minimal:hover {
+  background: var(--color-surface-sunken, #130F0F);
+}
+
+/* ── STEALTH MODE ── */
+.stealth .team-card::before {
+  background: linear-gradient(90deg, #2563EB 0%, #3B82F6 50%, #2563EB 100%);
+}
+
+.stealth .team-card:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 12px 40px rgba(37, 99, 235, 0.12);
+}
+
+.stealth .team-card .avatar,
+.stealth .team-card .team-avatar {
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+}
+
+.stealth .team-card .role,
+.stealth .team-card .title {
+  color: #3B82F6;
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+.stealth .team-card .social-links a:hover,
+.stealth .team-card .social a:hover {
+  background: linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%);
+  border-color: #2563EB;
+}
+
+/* ── UTILITY OVERRIDES ── */
+/* If your team cards use specific background classes */
+.bg-white.team-card {
+  background: var(--color-surface-raised, #FFFFFF);
+}
+
+.dark .bg-white.team-card {
+  background: var(--color-surface-raised, #1A1414);
+}

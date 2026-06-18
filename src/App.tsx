@@ -655,8 +655,8 @@ export default function App() {
   return (
     <>
       {/* ===== GLOBAL ANIMATIONS ===== */}
-      <AnimatedCursor />
-      <GradientMesh />
+      {/* <AnimatedCursor /> */}
+      {/* <GradientMesh /> */}
 
       <div
         className={`min-h-screen will-change-transform flex flex-col font-sans transition-colors duration-300 ${themeClassContent} ${theme === "dark" ? "dark" : ""} relative overflow-hidden overflow-x-hidden`}
