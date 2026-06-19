@@ -28,22 +28,23 @@ export const HeyvinLogo: React.FC<HeyvinLogoProps> = ({
         <defs>
           {/* Soft pulsing cyber glow */}
           <radialGradient id="lotusGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#22d3ee" stopOpacity={glowOpacity * 0.9} />
-            <stop offset="40%" stopColor="#0e7490" stopOpacity={glowOpacity * 0.4} />
-            <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+            <stop offset="0%" stopColor="#ea580c" stopOpacity={glowOpacity * 0.95} />
+            <stop offset="50%" stopColor="#7c2d12" stopOpacity={glowOpacity * 0.45} />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
           </radialGradient>
 
-          {/* Deep gradient for the petals */}
-          <linearGradient id="petalGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#083344" stopOpacity="0.75" />
-            <stop offset="60%" stopColor="#0e7490" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.95" />
+          {/* Deep gradient for the petals matching the logo image */}
+          <linearGradient id="petalGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#4c0519" stopOpacity="0.85" />
+            <stop offset="35%" stopColor="#9f1239" stopOpacity="0.85" />
+            <stop offset="70%" stopColor="#ea580c" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.95" />
           </linearGradient>
 
-          {/* Golden/Cyan glowing strike outlines */}
+          {/* Golden/Amber glowing stroke outlines */}
           <linearGradient id="strokeGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor="#0891b2" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#67e8f9" stopOpacity="1" />
+            <stop offset="0%" stopColor="#ea580c" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#fef08a" stopOpacity="1" />
           </linearGradient>
 
           {/* Bloom component for the glowing path */}
@@ -59,8 +60,8 @@ export const HeyvinLogo: React.FC<HeyvinLogoProps> = ({
         {/* Ambient background glow */}
         <circle cx="250" cy="250" r="220" fill="url(#lotusGlow)" filter="blur(16px)" />
 
-        {/* Lotus Shape Structure */}
-        <g transform="translate(0, 15)">
+        {/* Lotus Shape Structure - Shifted translation to 60 for perfect vertical centering */}
+        <g transform="translate(0, 60)">
           {/* Back Outermost Left Petal */}
           <path
             d="M250 350 C140 330, 40 250, 70 170 C90 125, 160 170, 250 260 Z"
@@ -125,21 +126,21 @@ export const HeyvinLogo: React.FC<HeyvinLogoProps> = ({
           />
         </g>
 
-        {/* Center Clock Dial Overlay */}
-        <g transform="translate(250, 255)">
+        {/* Center Clock Dial Overlay - Shifted to 300 to perfectly match the nested alignment on the centered leaf */}
+        <g transform="translate(250, 300)">
           {/* Outer Ring of clock */}
-          <circle cx="0" cy="0" r="55" fill="none" stroke="#22d3ee" strokeWidth="1.75" filter="url(#neonBloom)" opacity="0.95" />
+          <circle cx="0" cy="0" r="55" fill="none" stroke="#fbbf24" strokeWidth="1.75" filter="url(#neonBloom)" opacity="0.95" />
           <circle cx="0" cy="0" r="55" fill="#000" fillOpacity="0.15" />
 
           {/* Hours Ticks */}
           {/* 12 o'clock */}
-          <line x1="0" y1="-55" x2="0" y2="-47" stroke="#e0f7fa" strokeWidth="2" filter="url(#neonBloom)" />
+          <line x1="0" y1="-55" x2="0" y2="-47" stroke="#fff9e6" strokeWidth="2" filter="url(#neonBloom)" />
           {/* 6 o'clock */}
-          <line x1="0" y1="55" x2="0" y2="47" stroke="#e0f7fa" strokeWidth="2" filter="url(#neonBloom)" />
+          <line x1="0" y1="55" x2="0" y2="47" stroke="#fff9e6" strokeWidth="2" filter="url(#neonBloom)" />
           {/* 3 o'clock */}
-          <line x1="55" y1="0" x2="47" y2="0" stroke="#e0f7fa" strokeWidth="2" filter="url(#neonBloom)" />
+          <line x1="55" y1="0" x2="47" y2="0" stroke="#fff9e6" strokeWidth="2" filter="url(#neonBloom)" />
           {/* 9 o'clock */}
-          <line x1="-55" y1="0" x2="-47" y2="0" stroke="#e0f7fa" strokeWidth="2" filter="url(#neonBloom)" />
+          <line x1="-55" y1="0" x2="-47" y2="0" stroke="#fff9e6" strokeWidth="2" filter="url(#neonBloom)" />
 
           {/* Extra smaller minute markers */}
           {[30, 60, 120, 150, 210, 240, 300, 330].map((angle) => {
@@ -155,7 +156,7 @@ export const HeyvinLogo: React.FC<HeyvinLogoProps> = ({
                 y1={y1}
                 x2={x2}
                 y2={y2}
-                stroke="#22d3ee"
+                stroke="#fbbf24"
                 strokeWidth="1"
                 opacity="0.65"
               />
@@ -163,27 +164,27 @@ export const HeyvinLogo: React.FC<HeyvinLogoProps> = ({
           })}
 
           {/* Centered Node */}
-          <circle cx="0" cy="0" r="4.5" fill="#e0f7fa" filter="url(#neonBloom)" />
+          <circle cx="0" cy="0" r="4.5" fill="#ffffff" filter="url(#neonBloom)" />
 
           {/* Elegant clock hands */}
-          {/* Hour Hand points roughly to 10 (representing morning secure boundary) */}
+          {/* Hour Hand is elegant white and points to about 10 */}
           <line
             x1="0"
             y1="0"
             x2="-22"
             y2="-18"
-            stroke="#e0f7fa"
+            stroke="#ffffff"
             strokeWidth="3"
             strokeLinecap="round"
             filter="url(#neonBloom)"
           />
-          {/* Minute Hand points to 2 (10 past 10 config) */}
+          {/* Minute Hand is elegant gold/yellow and points to about 2 */}
           <line
             x1="0"
             y1="0"
             x2="32"
             y2="-16"
-            stroke="#22d3ee"
+            stroke="#fbbf24"
             strokeWidth="2"
             strokeLinecap="round"
             filter="url(#neonBloom)"
@@ -193,10 +194,10 @@ export const HeyvinLogo: React.FC<HeyvinLogoProps> = ({
 
       {showText && (
         <div className="mt-4 space-y-1">
-          <h1 className="text-2xl font-semibold tracking-[0.2em] text-cyan-400 font-serif uppercase drop-shadow-[0_2px_10px_rgba(34,211,238,0.2)]">
+          <h1 className="text-2xl font-semibold tracking-[0.2em] text-amber-500 font-serif uppercase drop-shadow-[0_2px_10px_rgba(245,158,11,0.25)]">
             Heyvin AI
           </h1>
-          <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-300 font-sans leading-none opacity-80 pl-[0.35em]">
+          <p className="text-[10px] uppercase tracking-[0.35em] text-amber-300/80 font-sans leading-none pl-[0.35em]">
             ...breathe easy
           </p>
         </div>
