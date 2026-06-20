@@ -1081,23 +1081,6 @@ canvas {
   .nav-item:hover { transform: none !important; }
 }
 
-// In index.css - add at the very end
-html {
-  overflow-x: hidden !important;
-  width: 100% !important;
-}
-
-body {
-  overflow-x: hidden !important;
-  width: 100% !important;
-  position: relative !important;
-}
-
-#root {
-  overflow-x: hidden !important;
-  width: 100% !important;
-}
-
 /* ── TEAM / TEAM CARDS ── Branded with Heyvin Colors ────── */
 
 /* Container for team cards - add this class to your team grid */
