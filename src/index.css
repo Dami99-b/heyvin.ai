@@ -924,12 +924,20 @@ canvas {
 .animate-stagger-7 { animation: staggerEntrance 0.6s var(--ease-smooth) both; animation-delay: 0.7s; }
 
 /* Floating Shapes for Hero Background */
-@keyframes floatShape {
+/* @keyframes floatShape {
   0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.1; }
   25% { transform: translate(30px, -20px) rotate(15deg); opacity: 0.15; }
   50% { transform: translate(-20px, 30px) rotate(-10deg); opacity: 0.08; }
   75% { transform: translate(20px, 10px) rotate(20deg); opacity: 0.12; }
+} */
+
+@keyframes floatShape {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.18; }
+  25% { transform: translate(30px, -20px) rotate(15deg); opacity: 0.24; }
+  50% { transform: translate(-20px, 30px) rotate(-10deg); opacity: 0.14; }
+  75% { transform: translate(20px, 10px) rotate(20deg); opacity: 0.20; }
 }
+
 .animate-float-shape {
   animation: floatShape 15s ease-in-out infinite;
   will-change: transform;
@@ -946,8 +954,15 @@ canvas {
     opacity: 0.6;
   }
 }
+
+/* .animate-orb-pulse {
+  animation: orbPulse 8s ease-in-out infinite;
+  will-change: transform, opacity;
+} */
+
 .animate-orb-pulse {
   animation: orbPulse 8s ease-in-out infinite;
+  opacity: 0.4;
   will-change: transform, opacity;
 }
 

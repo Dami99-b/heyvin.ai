@@ -906,12 +906,16 @@ export default function App() {
           guestView === "landing" ? (
             /* ── LANDING PAGE ─────────────────────────────────── */
             <div className="min-h-screen w-full flex flex-col items-center justify-between p-4 sm:p-8 bg-gradient-to-b from-[#FAF7F2] via-[#F5EFE4] to-[#FAF7F2] lg:from-[#F3ECE0] lg:via-[#FAF7F2] lg:to-[#FAF7F2] text-[#1A1414] font-sans relative overflow-y-auto select-none">
-              
               {/* Floating decorative shapes */}
-              <div className="absolute top-20 left-10 w-48 h-48 rounded-full bg-gradient-warm opacity-5 animate-float-shape" />
+              {/* <div className="absolute top-20 left-10 w-48 h-48 rounded-full bg-gradient-warm opacity-5 animate-float-shape" />
               <div className="absolute bottom-20 right-10 w-64 h-64 rounded-full bg-gradient-gold opacity-5 animate-orb-pulse" />
-              <div className="absolute top-40 right-20 w-32 h-32 rounded-full bg-brand-terracotta opacity-5 animate-slow-rotate" />
-              
+              <div className="absolute top-40 right-20 w-32 h-32 rounded-full bg-brand-terracotta opacity-5 animate-slow-rotate" /> */}
+
+              {/* Floating decorative shapes */}
+              <div className="absolute top-20 left-10 w-48 h-48 rounded-full bg-gradient-warm animate-float-shape pointer-events-none" />
+              <div className="absolute bottom-20 right-10 w-64 h-64 rounded-full bg-gradient-gold animate-orb-pulse pointer-events-none" />
+              <div className="absolute top-40 right-20 w-32 h-32 rounded-full bg-brand-terracotta animate-slow-rotate pointer-events-none" />
+
               {/* Floating particles */}
               <div className="absolute top-1/4 left-1/4 w-3 h-3 rounded-full bg-brand-wine animate-float-particle" />
               <div
