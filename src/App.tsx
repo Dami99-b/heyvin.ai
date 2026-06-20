@@ -732,7 +732,7 @@ export default function App() {
   return (
     <>
       {/* ===== GLOBAL ANIMATIONS ===== */}
-      <AnimatedCursor />
+      {/* <AnimatedCursor /> */}
       <GradientMesh />
 
       <div
